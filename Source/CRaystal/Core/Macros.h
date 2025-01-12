@@ -51,9 +51,9 @@ using Float = float;
 
 // Spectrum
 #ifdef CRAYSTAL_ENABLE_SPECTRUM
-#define CRAYSTAL_SPECTRUM_UNIFORM
+#define CRAYSTAL_SPECTRUM 1
 #else
-#define CRAYSTAL_SPECTRUM_RGB
+#define CRAYSTAL_SPECTRUM 0
 #endif
 
 // Dylib
@@ -90,4 +90,3 @@ using Float = float;
 #endif
 
 #define CRAYSTAL_DEVICE_HOST CRAYSTAL_DEVICE CRAYSTAL_HOST
-

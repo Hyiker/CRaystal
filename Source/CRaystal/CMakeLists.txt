@@ -3,10 +3,17 @@ add_library(CRaystal SHARED)
 target_sources(CRaystal PRIVATE
     CRaystal.h
 
-    Core/Helloworld.cpp
-    Core/Helloworld.cu
-    Core/Helloworld.h
+    Core/Enum.h
+    Core/Error.h
+    Core/Error.cpp
     Core/Macros.h
+    Core/Spectrum.cpp
+    Core/Spectrum.h
+    Core/Vec.cpp
+    Core/Vec.h
+
+    Utils/Logger.cpp
+    Utils/Logger.h
 )
 
 target_precompile_headers(CRaystal
@@ -154,5 +161,5 @@ set_target_properties(CRaystal PROPERTIES
 
 target_link_libraries(CRaystal
     PUBLIC
-    fmt::fmt
+    fmt::fmt glm::glm
 )

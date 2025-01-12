@@ -1,3 +1,3 @@
-# CRaystal the GPU renderer
+# C(uda)Raystal the GPU renderer
 
 TBD
