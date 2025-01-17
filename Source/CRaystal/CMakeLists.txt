@@ -9,6 +9,7 @@ target_sources(CRaystal PRIVATE
     Core/Macros.h
     Core/Spectrum.cpp
     Core/Spectrum.h
+    Core/SpectrumTabData.h
     Core/Vec.cpp
     Core/Vec.h
 

@@ -1,0 +1,9 @@
+{
+    "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
+    "C_Cpp.autocomplete": "default",
+    "C_Cpp.codeAnalysis.runAutomatically": true,
+    "C_Cpp.intelliSenseEngine": "default",
+    "C_Cpp.formatting": "clangFormat",
+    "C_Cpp.errorSquiggles": "enabled",
+    "cmake.configureOnEdit": false
+}

@@ -96,12 +96,7 @@ CRAYSTAL_DEVICE_HOST T degrees(T rad) {
 }
 
 template <typename T>
-CRAYSTAL_DEVICE_HOST T lerp(const T& left, const T& right, const T& t) {
-    return std::lerp(left, right, t);
-}
-
-template <typename T>
-CRAYSTAL_DEVICE_HOST T lerp(const T& left, const T& right, float t) {
+CRAYSTAL_DEVICE_HOST T lerp(const T& left, const T& right, Float t) {
     return left * (1.0f - t) + right * t;
 }
 
