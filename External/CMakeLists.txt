@@ -37,3 +37,14 @@ CPMAddPackage(
     "CATCH_INSTALL_DOCS OFF"
     "CATCH_INSTALL_EXTRAS OFF"
 )
+
+# tinyexr
+message(STATUS "Configure Tinyexr")
+CPMAddPackage(
+    NAME tinyexr
+    GIT_TAG cmake-fix
+    GITHUB_REPOSITORY Hyiker/tinyexr
+    OPTIONS
+    "TINYEXR_BUILD_SAMPLE OFF"
+    "TINYEXR_USE_MINIZ ON"
+)

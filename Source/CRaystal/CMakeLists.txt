@@ -13,6 +13,8 @@ target_sources(CRaystal PRIVATE
     Core/Vec.cpp
     Core/Vec.h
 
+    Utils/Image.cpp
+    Utils/Image.h
     Utils/Logger.cpp
     Utils/Logger.h
 )
@@ -153,6 +155,9 @@ target_compile_definitions(CRaystal
 target_include_directories(CRaystal
     PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}
+
+    PRIVATE
+    ../../External/stb
 )
 
 set_target_properties(CRaystal PROPERTIES
@@ -163,4 +168,6 @@ set_target_properties(CRaystal PROPERTIES
 target_link_libraries(CRaystal
     PUBLIC
     fmt::fmt glm::glm
+    PRIVATE
+    tinyexr
 )

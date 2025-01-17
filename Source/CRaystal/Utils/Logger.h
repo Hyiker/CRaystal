@@ -11,7 +11,6 @@ namespace CRay {
 class CRAYSTAL_API Logger {
    public:
     enum class Level : int {
-
         Disabled,  // disabled logger, namely suppress all output.
         Fatal,     // fatal error message, which will terminate the program.
         Error,     // error message.
@@ -21,15 +20,20 @@ class CRAYSTAL_API Logger {
         Count
     };
 
-    static void init();
+    static void init(Level filterLevel = Level::Info);
     static void log(Level level, const std::string_view message);
     static void shutdown();
 
+    Level getFilterLevel() const { return mFilterLevel; }
+
    private:
-    Logger();
+    Logger(Level filterLevel);
+
+    Level mFilterLevel;
 };
 
-void logBeforeInitialized(Logger::Level level, const std::string_view message);
+CRAYSTAL_API void logBeforeInitialized(Logger::Level level,
+                                       const std::string_view message);
 
 template <typename... Args>
 inline void logBeforeInitialized(Logger::Level level,

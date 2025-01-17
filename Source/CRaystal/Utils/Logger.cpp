@@ -14,7 +14,7 @@ static Logger *gLogger;    // singleton logger.
 
 constexpr std::string_view gTimeFormat = "{:%T}";
 constexpr std::string_view gLogFormat = "[{level:<15} {time:>16}] {message}\n";
-Logger::Logger() = default;
+Logger::Logger(Level filterLevel) : mFilterLevel(filterLevel) {}
 
 static std::string getLevelName(Logger::Level level) {
     switch (level) {
@@ -57,13 +57,18 @@ void logBeforeInitialized(Logger::Level level, std::string_view message) {
     if (level == Logger::Level::Fatal) std::exit(1);
 }
 
-void Logger::init() { gLogger = new Logger(); }
+void Logger::init(Level filterLevel) { gLogger = new Logger(filterLevel); }
 
 void Logger::log(Level level, std::string_view message) {
     if (gLogger == nullptr) {
         logBeforeInitialized(Logger::Level::Fatal, "Logger not initialized.");
         return;
     }
+
+    if (int(level) > int(gLogger->getFilterLevel())) {
+        return;
+    }
+
     std::string formattedMessage(
         formatLogMessage(std::chrono::system_clock::now(), level, message));
     std::lock_guard<std::mutex> lock(gMutex);

@@ -8,3 +8,8 @@ add_craystal_test(CoreTest)
 target_sources(CoreTest PRIVATE
     CoreTest.cpp
 )
+
+add_craystal_test(ImageTest)
+target_sources(ImageTest PRIVATE
+    ImageTest.cpp
+)

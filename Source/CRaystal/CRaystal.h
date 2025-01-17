@@ -8,3 +8,4 @@
 
 // Utils
 #include "Utils/Logger.h"
+#include "Utils/Image.h"
