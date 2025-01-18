@@ -7,6 +7,8 @@ using namespace CRay;
 using namespace Catch::Matchers;
 
 TEST_CASE("Test RGBSpectrum operations") {
+    Logger::init(Logger::Level::Disabled);
+
     SECTION("Test Constructor") {
         RGBSpectrum spectrum(1.f);
         for (int i = 0; i < spectrum.size(); ++i) {

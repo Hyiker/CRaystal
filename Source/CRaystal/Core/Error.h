@@ -23,6 +23,10 @@ namespace CRay {
 #pragma warning(disable : 4275)  // allow dllexport on classes dervied from STL
 #endif
 
+#if CRAYSTAL_NVCC
+#pragma nv_diag_suppress 1388  // allow dllexport on classes dervied from STL
+#endif
+
 class CRAYSTAL_API Exception : public std::exception {
    public:
     Exception() noexcept {}
@@ -39,6 +43,11 @@ class CRAYSTAL_API Exception : public std::exception {
     // constructor to be noexcept.
     std::shared_ptr<std::string> mpWhat;
 };
+
+
+#if CRAYSTAL_NVCC
+#pragma nv_diag_default 1388
+#endif
 
 #if CRAYSTAL_MSVC
 #pragma warning(pop)

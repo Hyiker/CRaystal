@@ -3,15 +3,25 @@ add_library(CRaystal SHARED)
 target_sources(CRaystal PRIVATE
     CRaystal.h
 
+    Core/Camera.cu
+    Core/Camera.h
+    Core/CameraProxy.h
+    Core/Sensor.h
+
     Core/Enum.h
     Core/Error.h
     Core/Error.cpp
     Core/Macros.h
+    Core/Object.h
     Core/Spectrum.cpp
     Core/Spectrum.h
     Core/SpectrumTabData.h
     Core/Vec.cpp
     Core/Vec.h
+
+    Math/CRayMath.h
+    Math/MathDefs.h
+    Math/Ray.h
 
     Utils/Image.cpp
     Utils/Image.h
@@ -107,6 +117,11 @@ target_compile_options(CRaystal
     # NVCC flags.
     $<$<AND:$<PLATFORM_ID:Windows>,$<COMPILE_LANGUAGE:CUDA>>:
     -Xcompiler=/utf-8
+    >
+
+    $<$<COMPILE_LANGUAGE:CUDA>:
+    -diag-suppress=20012
+    -diag-suppress=1394
     >
 
     PRIVATE
