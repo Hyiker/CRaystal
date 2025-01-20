@@ -84,9 +84,11 @@ using Float = float;
 #if CRAYSTAL_NVCC
 #define CRAYSTAL_DEVICE __device__
 #define CRAYSTAL_HOST __host__
+#define CRAYSTAL_CONSTANT __constant__
 #else
 #define CRAYSTAL_DEVICE
 #define CRAYSTAL_HOST
+#define CRAYSTAL_CONSTANT
 #endif
 
 #define CRAYSTAL_DEVICE_HOST CRAYSTAL_DEVICE CRAYSTAL_HOST

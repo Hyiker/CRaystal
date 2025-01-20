@@ -6,6 +6,7 @@ target_sources(CRaystal PRIVATE
     Core/Camera.cu
     Core/Camera.h
     Core/CameraProxy.h
+    Core/Sensor.cu
     Core/Sensor.h
 
     Core/Buffer.cu

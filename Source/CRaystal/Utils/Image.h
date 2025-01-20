@@ -1,6 +1,7 @@
 #pragma once
 
 #include <filesystem>
+#include <memory>
 #include <vector>
 
 #include "Core/Enum.h"
@@ -21,6 +22,7 @@ CRAYSTAL_ENUM_REGISTER(ColorSpace);
  */
 class CRAYSTAL_API Image {
    public:
+    using Ref = std::shared_ptr<Image>;
     Image(size_t width, size_t height, int channels,
           ColorSpace colorSpace = ColorSpace::Linear)
         : mWidth(int(width)),

@@ -15,7 +15,8 @@ class CRAYSTAL_API HostObject {
     HostObject& operator=(const HostObject& other) = delete;
     HostObject& operator=(HostObject&& other) noexcept = default;
 
-    virtual void updateDeviceData() const = 0;
+    virtual void updateDeviceData() const {}
+    virtual void readbackDeviceData() {}
 
     virtual ~HostObject() = default;
 };
