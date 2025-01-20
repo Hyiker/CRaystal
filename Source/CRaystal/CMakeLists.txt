@@ -8,6 +8,8 @@ target_sources(CRaystal PRIVATE
     Core/CameraProxy.h
     Core/Sensor.h
 
+    Core/Buffer.cu
+    Core/Buffer.h
     Core/Enum.h
     Core/Error.h
     Core/Error.cpp
@@ -23,6 +25,7 @@ target_sources(CRaystal PRIVATE
     Math/MathDefs.h
     Math/Ray.h
 
+    Utils/CudaUtils.h
     Utils/Image.cpp
     Utils/Image.h
     Utils/Logger.cpp

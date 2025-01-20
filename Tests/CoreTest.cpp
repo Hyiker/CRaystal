@@ -1,6 +1,7 @@
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/matchers/catch_matchers_floating_point.hpp>
 
+#include "Core/Buffer.h"
 #include "Core/Spectrum.h"
 
 using namespace CRay;
@@ -69,6 +70,55 @@ TEST_CASE("Test RGBSpectrum operations") {
         auto result = spec.sqrt();
         for (int i = 0; i < result.size(); ++i) {
             REQUIRE_THAT(result[i], WithinAbs(std::sqrt(4.0f), 1e-5));
+        }
+    }
+}
+
+SCENARIO("DeviceBuffer basic operations") {
+    GIVEN("A DeviceBuffer with size") {
+        const int bufferSize = 1024;
+        DeviceBuffer buffer(bufferSize);
+
+        THEN("Buffer properties are correct") {
+            CHECK(buffer.size() == bufferSize);
+            CHECK(buffer.data() != nullptr);
+        }
+
+        WHEN("Copying data to device") {
+            std::vector<float> hostData(bufferSize / sizeof(float), 1.0f);
+            buffer.copyFromHost(hostData.data());
+
+            THEN("Data can be copied back") {
+                std::vector<float> resultData(bufferSize / sizeof(float), 0.0f);
+                buffer.copyToHost(resultData.data());
+                CHECK(resultData == hostData);
+            }
+        }
+
+        WHEN("Using memset") {
+            buffer.memset(0);
+            std::vector<unsigned char> resultData(bufferSize, 255);
+            buffer.copyToHost(resultData.data());
+
+            THEN("Memory is set correctly") {
+                CHECK(std::all_of(resultData.begin(), resultData.end(),
+                                [](unsigned char v) { return v == 0; }));
+            }
+        }
+    }
+
+    GIVEN("A moved buffer") {
+        DeviceBuffer original(1024);
+        DeviceBuffer moved = std::move(original);
+
+        THEN("Original is empty") {
+            CHECK(original.size() == 0);
+            CHECK(original.data() == nullptr);
+        }
+
+        AND_THEN("Moved buffer has the data") {
+            CHECK(moved.size() == 1024);
+            CHECK(moved.data() != nullptr);
         }
     }
 }

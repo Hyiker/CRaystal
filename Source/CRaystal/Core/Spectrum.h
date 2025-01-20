@@ -16,20 +16,28 @@ class SpectrumBase {
    public:
     CRAYSTAL_DEVICE_HOST SpectrumBase() : SpectrumBase(Float(0)) {}
 
-    CRAYSTAL_DEVICE_HOST explicit SpectrumBase(Float value) : mData(value) {
-        mData.fill(value);
+    CRAYSTAL_DEVICE_HOST explicit SpectrumBase(Float value) {
+        for (int i = 0; i < N; i++) {
+            mData[i] = value;
+        }
     }
 
     CRAYSTAL_HOST explicit SpectrumBase(std::span<const Float, N> values) {
-        std::copy(values.begin(), values.end(), mData.begin());
+        for (int i = 0; i < N; i++) {
+            mData[i] = values[i];
+        }
     }
 
     CRAYSTAL_DEVICE_HOST SpectrumBase(const SpectrumBase& other) {
-        mData = other.mData;
+        for (int i = 0; i < N; i++) {
+            mData[i] = other.mData[i];
+        }
     }
 
     CRAYSTAL_DEVICE_HOST explicit SpectrumBase(SpectrumBase&& other) noexcept {
-        mData = std::move(other.mData);
+        for (int i = 0; i < N; i++) {
+            mData[i] = std::move(other.mData[i]);
+        }
     }
 
     static consteval int size() { return N; }
@@ -39,12 +47,14 @@ class SpectrumBase {
     CRAYSTAL_DEVICE_HOST Float operator[](int i) const { return mData[i]; }
 
     CRAYSTAL_DEVICE_HOST T& operator=(const T& other) {
-        mData = other.mData;
+        std::memcpy(mData, other.mData, sizeof(mData));
         return *static_cast<T*>(this);
     }
 
     CRAYSTAL_DEVICE_HOST T& operator=(T&& other) noexcept {
-        mData = std::move(other.mData);
+        for (int i = 0; i < N; i++) {
+            mData[i] = std::move(other.mData[i]);
+        }
         return *static_cast<T*>(this);
     }
 
@@ -165,7 +175,7 @@ class SpectrumBase {
     }
 
    protected:
-    std::array<Float, N> mData;
+    Float mData[N];
 };
 
 /** RGB Spectrum stores linear srgb values.
@@ -178,7 +188,7 @@ class CRAYSTAL_API RGBSpectrum : public SpectrumBase<3, RGBSpectrum> {
     explicit RGBSpectrum(Float3 rgb);
 
     CRAYSTAL_DEVICE_HOST RGBSpectrum(const RGBSpectrum& spectrum)
-        : SpectrumBase(spectrum.mData) {}
+        : SpectrumBase(spectrum) {}
 
     CRAYSTAL_DEVICE_HOST Float3 toXYZ() const;
 
@@ -211,7 +221,7 @@ class CRAYSTAL_API BroadSpectrum
     using SpectrumBase::operator=;
 
     CRAYSTAL_DEVICE_HOST BroadSpectrum(const BroadSpectrum& spectrum)
-        : SpectrumBase(spectrum.mData) {}
+        : SpectrumBase(spectrum) {}
 
     CRAYSTAL_DEVICE_HOST Float3 toXYZ() const;
 
