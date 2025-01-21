@@ -56,11 +56,11 @@ constexpr float kXYZTable[3][kCIESampleCount] = {
 
 constexpr Float kXYZStep = (kCIEMax - kCIEMin) / Float(kCIESampleCount);
 
-constexpr Float3x3 kXYZ2SrgbMatrix(3.240479f, -1.537150f, -0.498535f,
+const Float3x3 kXYZ2SrgbMatrix(3.240479f, -1.537150f, -0.498535f,
                                    -0.969256f, 1.875991f, 0.041556f, 0.055648f,
                                    -0.204043f, 1.057311f);
 
-constexpr Float3x3 kSrgb2XYZMatrix(0.412453f, 0.357580f, 0.180423f, 0.212671f,
+const Float3x3 kSrgb2XYZMatrix(0.412453f, 0.357580f, 0.180423f, 0.212671f,
                                    0.715160f, 0.072169f, 0.019334f, 0.119193f,
                                    0.950227f);
 

@@ -11,6 +11,7 @@ Sensor::Sensor(UInt2 size, uint32_t spp) {
 
     mpDeviceConstData = std::make_unique<DeviceBuffer>(sizeof(SensorData));
     mpDeviceData = std::make_unique<DeviceBuffer>(area * sizeof(Spectrum));
+    mConstData.dataArray = (Spectrum*)mpDeviceData->data();
 }
 
 Sensor::Sensor(Sensor&& other) noexcept
@@ -27,6 +28,9 @@ Sensor& Sensor::operator=(Sensor&& other) noexcept {
         mpDeviceData = std::move(other.mpDeviceData);
     }
     return *this;
+}
+SensorData* Sensor::getDeviceView() const {
+    return (SensorData*)mpDeviceConstData->data();
 }
 
 void Sensor::readbackDeviceData() {

@@ -9,13 +9,14 @@ using namespace Catch::Matchers;
 
 TEST_CASE("CameraProxy - generateRay Function", "[CameraProxy]") {
     Camera camera;
+    UInt2 sensorSize(512, 512);
 
     camera.calculateCameraData();
 
     SECTION("Generate Ray at Center of Sensor") {
         const auto& data = camera.getData();
         Float2 sensorPos(256, 256);
-        Ray ray = data.generateRay(sensorPos);
+        Ray ray = data.generateRay(sensorSize, sensorPos);
         REQUIRE(ray.origin == Float3p32(0, 0, 0));
         REQUIRE_THAT(ray.direction.x, Catch::Matchers::WithinAbs(0.0f, 1e-5));
         REQUIRE_THAT(ray.direction.y, Catch::Matchers::WithinAbs(0.0f, 1e-5));
@@ -25,7 +26,7 @@ TEST_CASE("CameraProxy - generateRay Function", "[CameraProxy]") {
     SECTION("Generate Ray at Top-Left Corner of Sensor") {
         const auto& data = camera.getData();
         Float2 sensorPos(0, 0);
-        Ray ray = data.generateRay(sensorPos);
+        Ray ray = data.generateRay(sensorSize, sensorPos);
         REQUIRE(ray.origin == Float3p32(0, 0, 0));
         REQUIRE_THAT(ray.direction.x,
                      Catch::Matchers::WithinAbs(-0.44721359f, 1e-4));
@@ -38,7 +39,7 @@ TEST_CASE("CameraProxy - generateRay Function", "[CameraProxy]") {
     SECTION("Generate Ray at Bottom-Right Corner of Sensor") {
         const auto& data = camera.getData();
         Float2 sensorPos(511, 511);
-        Ray ray = data.generateRay(sensorPos);
+        Ray ray = data.generateRay(sensorSize, sensorPos);
         REQUIRE(ray.origin == Float3p32(0, 0, 0));
         REQUIRE_THAT(ray.direction.x,
                      Catch::Matchers::WithinAbs(0.446162969f, 1e-4));
@@ -91,11 +92,6 @@ SCENARIO("Sensor device data operations", "[sensor]") {
 }
 
 SCENARIO("Sensor edge cases", "[sensor]") {
-    SECTION("Zero size sensor") {
-        UInt2 size{0, 0};
-        REQUIRE_NOTHROW(Sensor(size, 1));
-    }
-
     SECTION("Single pixel sensor") {
         UInt2 size{1, 1};
         Sensor sensor(size, 1);

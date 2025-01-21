@@ -14,7 +14,11 @@ CRAYSTAL_API Float3 RGB2XYZ(const Float3& rgb);
 template <int N, typename T>
 class SpectrumBase {
    public:
-    CRAYSTAL_DEVICE_HOST SpectrumBase() : SpectrumBase(Float(0)) {}
+    CRAYSTAL_DEVICE_HOST SpectrumBase() {
+        for (int i = 0; i < N; i++) {
+            mData[i] = 0.f;
+        }
+    }
 
     CRAYSTAL_DEVICE_HOST explicit SpectrumBase(Float value) {
         for (int i = 0; i < N; i++) {
@@ -40,7 +44,7 @@ class SpectrumBase {
         }
     }
 
-    static consteval int size() { return N; }
+    CRAYSTAL_DEVICE_HOST static consteval int size() { return N; }
 
     CRAYSTAL_DEVICE_HOST Float& operator[](int i) { return mData[i]; }
 
@@ -185,14 +189,18 @@ class CRAYSTAL_API RGBSpectrum : public SpectrumBase<3, RGBSpectrum> {
     using SpectrumBase::SpectrumBase;
     using SpectrumBase::operator=;
 
-    explicit RGBSpectrum(Float3 rgb);
+    CRAYSTAL_DEVICE_HOST explicit RGBSpectrum(Float3 rgb) {
+        mData[0] = rgb.r;
+        mData[1] = rgb.g;
+        mData[2] = rgb.b;
+    }
 
     CRAYSTAL_DEVICE_HOST RGBSpectrum(const RGBSpectrum& spectrum)
         : SpectrumBase(spectrum) {}
 
-    CRAYSTAL_DEVICE_HOST Float3 toXYZ() const;
+    CRAYSTAL_HOST Float3 toXYZ() const;
 
-    CRAYSTAL_DEVICE_HOST Float3 toRGB() const;
+    CRAYSTAL_HOST Float3 toRGB() const;
 
     CRAYSTAL_HOST static RGBSpectrum fromRGB(Float3 rgb, bool isIllum = false);
 
@@ -223,9 +231,9 @@ class CRAYSTAL_API BroadSpectrum
     CRAYSTAL_DEVICE_HOST BroadSpectrum(const BroadSpectrum& spectrum)
         : SpectrumBase(spectrum) {}
 
-    CRAYSTAL_DEVICE_HOST Float3 toXYZ() const;
+    CRAYSTAL_HOST Float3 toXYZ() const;
 
-    CRAYSTAL_DEVICE_HOST Float3 toRGB() const;
+    CRAYSTAL_HOST Float3 toRGB() const;
 
     CRAYSTAL_HOST static BroadSpectrum fromRGB(Float3 rgb,
                                                bool isIllum = false);

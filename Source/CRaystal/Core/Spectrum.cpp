@@ -22,12 +22,6 @@ BroadSpectrum gRGBIllum2SpectBlue;
 Float3 XYZ2RGB(const Float3& xyz) { return kXYZ2SrgbMatrix * xyz; }
 Float3 RGB2XYZ(const Float3& rgb) { return kSrgb2XYZMatrix * rgb; }
 
-RGBSpectrum::RGBSpectrum(Float3 rgb) {
-    mData[0] = rgb.r;
-    mData[1] = rgb.g;
-    mData[2] = rgb.b;
-}
-
 Float3 RGBSpectrum::toXYZ() const { return RGB2XYZ(toRGB()); }
 
 Float3 RGBSpectrum::toRGB() const {
@@ -54,7 +48,8 @@ Float3 BroadSpectrum::toRGB() const { return XYZ2RGB(toXYZ()); }
 
 BroadSpectrum BroadSpectrum::fromRGB(Float3 rgb, bool isIllum) { return {}; }
 
-// static BroadSpectrum interpolateFromTabular(std::span<const double> wavelengths,
+// static BroadSpectrum interpolateFromTabular(std::span<const double>
+// wavelengths,
 //                                             std::span<const double> values) {
 //     CRAYSTAL_ASSERT(wavelengths.size() == values.size());
 
@@ -90,20 +85,23 @@ BroadSpectrum BroadSpectrum::fromRGB(Float3 rgb, bool isIllum) { return {}; }
 //         if (target < wavelengths[0])
 //             start = -1;
 //         else {
-//             auto it = std::lower_bound(wavelengths.begin(), wavelengths.end(),
+//             auto it = std::lower_bound(wavelengths.begin(),
+//             wavelengths.end(),
 //                                        wavelen - step);
 //             if (it != wavelengths.begin() &&
 //                 (it == wavelengths.end() || *it > target)) {
 //                 --it;
 //             }
-//             start = std::clamp<int>(std::distance(wavelengths.begin(), it), 0, wavelengths.size() - 2);
+//             start = std::clamp<int>(std::distance(wavelengths.begin(), it),
+//             0, wavelengths.size() - 2);
 //         }
 
 //         if (wavelen + step > wavelengths[inputSampleCount - 1])
 //             end = inputSampleCount;
 //         else {
 //             end = start > 0 ? start : 0;
-//             while (end < inputSampleCount && wavelen + step > wavelengths[end])
+//             while (end < inputSampleCount && wavelen + step >
+//             wavelengths[end])
 //                 ++end;
 //         }
 
@@ -117,7 +115,8 @@ BroadSpectrum BroadSpectrum::fromRGB(Float3 rgb, bool isIllum) { return {}; }
 //             CRAYSTAL_ASSERT(t >= 0 && t <= 1);
 //             return std::lerp(t, valuesClamped(start), valuesClamped(end));
 //         } else {
-//             return AverageSpectrumSamples(wavelengths, values, inputSampleCount,
+//             return AverageSpectrumSamples(wavelengths, values,
+//             inputSampleCount,
 //                                           wavelen - step / 2,
 //                                           wavelen + step / 2);
 //         }

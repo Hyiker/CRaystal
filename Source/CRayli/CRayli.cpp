@@ -1,11 +1,11 @@
-#include <fmt/format.h>
-
 #include "CRaystal.h"
+#include "Core/Walkthrough.h"
 
 using namespace CRay;
 int main(int argc, char const *argv[]) {
     Logger::init();
     Spectrum::initialize();
-    logInfo("Hello world from CRayli");
+
+    crayRenderSample();
     return 0;
 }

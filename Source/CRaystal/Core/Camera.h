@@ -1,23 +1,25 @@
 #pragma once
+#include "Buffer.h"
 #include "CameraProxy.h"
 #include "Macros.h"
 #include "Object.h"
+#include "Sensor.h"
+
 namespace CRay {
 
 /** Host side camera class.
  */
 class CRAYSTAL_API Camera : public HostObject {
    public:
+    using Ref = std::shared_ptr<Camera>;
+
     Camera();
     Camera(const Camera& other) = delete;
     Camera(Camera&& other) noexcept;
     Camera& operator=(const Camera& other) = delete;
     Camera& operator=(Camera&& other) noexcept;
 
-    void setSensorSize(const UInt2& size) {
-        mData.sensorWidth = size.x;
-        mData.sensorHeight = size.y;
-    }
+    CameraProxy* getDeviceView() const;
 
     void setFovY(Float value) { mData.fovY = value; }
 
@@ -38,7 +40,7 @@ class CRAYSTAL_API Camera : public HostObject {
    private:
     mutable CameraProxy mData;
 
-    CameraProxy* mpDeviceData;
+    std::unique_ptr<DeviceBuffer> mpDeviceData;
 };
 
 }  // namespace CRay

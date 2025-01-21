@@ -5,29 +5,28 @@
 namespace CRay {
 
 Camera::Camera() : mpDeviceData(nullptr) {
-    cudaMalloc(&mpDeviceData, sizeof(CameraProxy));
+    mpDeviceData = std::make_unique<DeviceBuffer>(sizeof(CameraProxy));
 
     updateDeviceData();
 }
 
 Camera::Camera(Camera&& other) noexcept
-    : mData(std::move(other.mData)), mpDeviceData(other.mpDeviceData) {
+    : mData(std::move(other.mData)),
+      mpDeviceData(std::move(other.mpDeviceData)) {
     other.mpDeviceData = nullptr;
 }
 
 Camera& Camera::operator=(Camera&& other) noexcept {
     if (this != &other) {
-        if (mpDeviceData) {
-            cudaFree(mpDeviceData);
-            mpDeviceData = nullptr;
-        }
-
         mData = std::move(other.mData);
-
-        mpDeviceData = other.mpDeviceData;
+        mpDeviceData = std::move(other.mpDeviceData);
         other.mpDeviceData = nullptr;
     }
     return *this;
+}
+
+CameraProxy* Camera::getDeviceView() const {
+    return (CameraProxy*)mpDeviceData->data();
 }
 
 void Camera::calculateCameraData() const {
@@ -37,15 +36,8 @@ void Camera::calculateCameraData() const {
 }
 
 void Camera::updateDeviceData() const {
-    CRAYSTAL_CHECK(mpDeviceData != nullptr, "Cuda pointer is none");
-    cudaMemcpy(mpDeviceData, &mData, sizeof(CameraProxy),
-               cudaMemcpyHostToDevice);
+    mpDeviceData->copyFromHost(&mData);
 }
 
-Camera::~Camera() {
-    if (mpDeviceData) {
-        cudaFree(mpDeviceData);
-        mpDeviceData = nullptr;
-    }
-}
+Camera::~Camera() = default;
 }  // namespace CRay

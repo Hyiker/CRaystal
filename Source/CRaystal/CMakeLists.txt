@@ -1,4 +1,4 @@
-add_library(CRaystal SHARED)
+add_library(CRaystal STATIC SHARED)
 
 target_sources(CRaystal PRIVATE
     CRaystal.h
@@ -12,8 +12,9 @@ target_sources(CRaystal PRIVATE
     Core/Buffer.cu
     Core/Buffer.h
     Core/Enum.h
-    Core/Error.h
     Core/Error.cpp
+    Core/Error.h
+    Core/Hit.h
     Core/Macros.h
     Core/Object.h
     Core/Spectrum.cpp
@@ -21,10 +22,18 @@ target_sources(CRaystal PRIVATE
     Core/SpectrumTabData.h
     Core/Vec.cpp
     Core/Vec.h
+    Core/Walkthrough.cu
+    Core/Walkthrough.h
 
     Math/CRayMath.h
     Math/MathDefs.h
     Math/Ray.h
+
+    Scene/Scene.cu
+    Scene/Scene.h
+    Scene/Shape.h
+    Scene/Sphere.cu
+    Scene/Sphere.h
 
     Utils/CudaUtils.h
     Utils/Image.cpp
