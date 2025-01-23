@@ -30,15 +30,14 @@ __global__ void renderKernel(const SceneView* pScene,
 
 void crayRenderSample() {
     // Build scene
-    Scene scene;
-    Sphere sphere;
 
+    SceneData data;
+    SphereData sphere;
     sphere.center = Float3(0);
     sphere.radius = 1.f;
+    data.spheres.push_back(sphere);
 
-    scene.addSphere(sphere);
-    scene.finalize();
-    scene.updateDeviceData();
+    Scene scene(std::move(data));
 
     UInt2 size(512, 512);
 

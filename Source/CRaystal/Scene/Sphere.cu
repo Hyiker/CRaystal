@@ -3,7 +3,11 @@
 #include "Math/MathDefs.h"
 #include "Sphere.h"
 namespace CRay {
-bool Sphere::intersect(const Ray& ray, HitInfo& hitInfo, Float& hitT) const {
+CRAYSTAL_DEVICE bool SphereSOA::intersect(PrimitiveID id, const Ray& ray,
+                                          HitInfo& hitInfo, Float& hitT) const {
+    Float3 center = pCenter[id];
+    Float radius = pRadius[id];
+
     Float3 oc = ray.origin - center;
 
     Float a = dot(ray.direction, ray.direction);
@@ -46,4 +50,37 @@ bool Sphere::intersect(const Ray& ray, HitInfo& hitInfo, Float& hitT) const {
 
     return true;
 }
+
+CRAYSTAL_DEVICE SphereData SphereSOA::getSphere(PrimitiveID id) const {
+    SphereData data;
+    data.center = pCenter[id];
+    data.radius = pRadius[id];
+
+    return data;
+}
+
+SphereManager::SphereManager(const std::vector<SphereData>& data) {
+    int cnt = data.size();
+
+    std::vector<Float3> center;
+    std::vector<Float> radius;
+    center.reserve(cnt);
+    radius.reserve(cnt);
+
+    for (const auto& d : data) {
+        center.push_back(d.center);
+        radius.push_back(d.radius);
+    }
+
+    mpCenterBuffer = std::make_unique<DeviceBuffer>(sizeof(Float3) * cnt);
+    mpRadiusBuffer = std::make_unique<DeviceBuffer>(sizeof(Float) * cnt);
+
+    mpCenterBuffer->copyFromHost(center.data());
+    mpRadiusBuffer->copyFromHost(radius.data());
+
+    mView.count = cnt;
+    mView.pCenter = (Float3*)mpCenterBuffer->data();
+    mView.pRadius = (Float*)mpRadiusBuffer->data();
+}
+
 }  // namespace CRay

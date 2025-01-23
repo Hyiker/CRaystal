@@ -4,15 +4,10 @@ namespace CRay {
 
 CRAYSTAL_DEVICE bool SceneView::intersect(RayHit& rayHit) const {
     bool intersected = false;
-    for (uint32_t i = 0; i < sphereCount; i++) {
-        intersected |= intersectShape(PrimitiveID(i), sphereData[i], rayHit);
+    for (uint32_t i = 0; i < sphereSOA.count; i++) {
+        intersected |= intersectShape(PrimitiveID(i), sphereSOA, rayHit);
     }
     return intersected;
-}
-
-CRAYSTAL_DEVICE const Sphere& SceneView::getSphere(
-    PrimitiveID primitiveID) const {
-    return sphereData[primitiveID];
 }
 
 CRAYSTAL_DEVICE Intersection
@@ -27,7 +22,7 @@ SceneView::createIntersection(const RayHit& rayHit) const {
 
     switch (hit.type) {
         case HitType::Sphere: {
-            const Sphere& sphere = getSphere(hit.primitiveIndex);
+            SphereData sphere = sphereSOA.getSphere(hit.primitiveIndex);
             faceNormal = normalize(posW - sphere.center);
         } break;
     }
@@ -35,30 +30,16 @@ SceneView::createIntersection(const RayHit& rayHit) const {
     return Intersection(posW, faceNormal, faceNormal, viewW);
 }
 
-Scene::Scene() {
+Scene::Scene(SceneData&& data) {
+    mpSphereManager = std::make_shared<SphereManager>(data.spheres);
     mpDeviceSceneView = std::make_unique<DeviceBuffer>(sizeof(SceneView));
+
+    mSceneView.sphereSOA = mpSphereManager->getDeviceView();
+    mpDeviceSceneView->copyFromHost(&mSceneView);
 }
 
 SceneView* Scene::getDeviceView() {
     return (SceneView*)mpDeviceSceneView->data();
-}
-
-void Scene::finalize() {
-    if (mSceneView.sphereCount) {
-        mpDeviceSphereData = std::make_unique<DeviceBuffer>(
-            mSceneView.sphereCount * sizeof(Sphere));
-        mSceneView.sphereData = (Sphere*)mpDeviceSphereData->data();
-    }
-}
-
-void Scene::updateDeviceData() const {
-    mpDeviceSceneView->copyFromHost(&mSceneView);
-    mpDeviceSphereData->copyFromHost(mSphereData.data());
-}
-
-void Scene::addSphere(Sphere sphere) {
-    mSceneView.sphereCount++;
-    mSphereData.push_back(std::move(sphere));
 }
 
 }  // namespace CRay
