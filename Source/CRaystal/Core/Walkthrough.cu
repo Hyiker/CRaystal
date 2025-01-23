@@ -20,7 +20,9 @@ __global__ void renderKernel(const SceneView* pScene,
     RayHit rayHit;
     rayHit.ray = ray;
     if (pScene->intersect(rayHit)) {
-        color = Spectrum(1.f);
+        const Intersection it = pScene->createIntersection(rayHit);
+
+        color = Spectrum(it.faceNormal);
     }
 
     pSensor->addSample(color, pixel);

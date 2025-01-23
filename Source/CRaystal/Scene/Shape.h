@@ -27,7 +27,7 @@ CRAYSTAL_DEVICE_HOST bool intersectShape(PrimitiveID id, const Shape& shape,
     // Return isHit, but set rayHit info by closest hit
     if (isHit && hitT < rayHit.hitT) {
         rayHit.hitInfo = hit;
-        rayHit.hitT = rayHit.hitT;
+        rayHit.hitT = hitT;
     }
 
     return isHit;

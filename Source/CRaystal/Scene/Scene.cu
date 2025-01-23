@@ -2,13 +2,37 @@
 #include "Scene.h"
 namespace CRay {
 
-bool SceneView::intersect(RayHit& rayHit) const {
-    rayHit.hitT = kFltInf;
+CRAYSTAL_DEVICE bool SceneView::intersect(RayHit& rayHit) const {
     bool intersected = false;
     for (uint32_t i = 0; i < sphereCount; i++) {
         intersected |= intersectShape(PrimitiveID(i), sphereData[i], rayHit);
     }
     return intersected;
+}
+
+CRAYSTAL_DEVICE const Sphere& SceneView::getSphere(
+    PrimitiveID primitiveID) const {
+    return sphereData[primitiveID];
+}
+
+CRAYSTAL_DEVICE Intersection
+SceneView::createIntersection(const RayHit& rayHit) const {
+    const Ray& ray = rayHit.ray;
+
+    Float3 posW = ray.origin + rayHit.hitT * ray.direction;
+    Float3 viewW = -normalize(ray.direction);
+    Float3 faceNormal;
+
+    const HitInfo& hit = rayHit.hitInfo;
+
+    switch (hit.type) {
+        case HitType::Sphere: {
+            const Sphere& sphere = getSphere(hit.primitiveIndex);
+            faceNormal = normalize(posW - sphere.center);
+        } break;
+    }
+
+    return Intersection(posW, faceNormal, faceNormal, viewW);
 }
 
 Scene::Scene() {

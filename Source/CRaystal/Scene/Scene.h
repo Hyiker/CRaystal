@@ -3,6 +3,7 @@
 #include <vector>
 
 #include "Core/Buffer.h"
+#include "Core/Intersection.h"
 #include "Core/Macros.h"
 #include "Core/Object.h"
 #include "Shape.h"
@@ -18,7 +19,11 @@ struct CRAYSTAL_API SceneView {
     // Always use device pointer
     Sphere* sphereData;
 
-    CRAYSTAL_DEVICE_HOST bool intersect(RayHit& rayHit) const;
+    CRAYSTAL_DEVICE bool intersect(RayHit& rayHit) const;
+
+    CRAYSTAL_DEVICE const Sphere& getSphere(PrimitiveID primitiveID) const;
+
+    CRAYSTAL_DEVICE Intersection createIntersection(const RayHit& rayHit) const;
 };
 
 class CRAYSTAL_API Scene : public HostObject {

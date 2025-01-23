@@ -14,7 +14,11 @@ target_sources(CRaystal PRIVATE
     Core/Enum.h
     Core/Error.cpp
     Core/Error.h
+    Core/Frame.cu
+    Core/Frame.h
     Core/Hit.h
+    Core/Intersection.cu
+    Core/Intersection.h
     Core/Macros.h
     Core/Object.h
     Core/Spectrum.cpp
