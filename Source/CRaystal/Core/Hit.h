@@ -8,7 +8,7 @@
 
 namespace CRay {
 
-enum class HitType : uint32_t { Sphere };
+enum class HitType : uint32_t { Sphere, Triangle };
 
 using PrimitiveID = uint32_t;
 

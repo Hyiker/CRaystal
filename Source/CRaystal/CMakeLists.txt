@@ -38,6 +38,8 @@ target_sources(CRaystal PRIVATE
     Scene/Shape.h
     Scene/Sphere.cu
     Scene/Sphere.h
+    Scene/Triangle.cu
+    Scene/Triangle.h
 
     Utils/CudaUtils.h
     Utils/Image.cpp
