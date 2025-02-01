@@ -31,8 +31,8 @@ class CRAYSTAL_API DeviceBuffer {
    private:
     void free();
 
-    void* mpDeviceData;  ///< device pointer
-    int mSize;           ///< Buffer size in bytes
+    void* mpDeviceData = nullptr;  ///< device pointer
+    int mSize = 0;                 ///< Buffer size in bytes
 };
 
 }  // namespace CRay

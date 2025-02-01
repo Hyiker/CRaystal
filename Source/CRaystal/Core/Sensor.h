@@ -44,6 +44,8 @@ class CRAYSTAL_API Sensor : public HostObject {
 
     uint32_t getSPP() const { return mSPP; }
 
+    UInt2 getSize() const { return mConstData.size; }
+
     /** Create rgb image from sensor data.
      */
     Image::Ref createImage() const;

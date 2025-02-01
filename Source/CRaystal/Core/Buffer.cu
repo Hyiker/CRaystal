@@ -6,8 +6,8 @@
 namespace CRay {
 DeviceBuffer::DeviceBuffer(int sizeInBytes)
     : mpDeviceData(nullptr), mSize(sizeInBytes) {
-    CRAYSTAL_ASSERT(sizeInBytes > 0);
-    CRAYSTAL_CUDA_CHECK(cudaMalloc(&mpDeviceData, sizeInBytes));
+    if (sizeInBytes != 0)
+        CRAYSTAL_CUDA_CHECK(cudaMalloc(&mpDeviceData, sizeInBytes));
 }
 
 DeviceBuffer::~DeviceBuffer() {
@@ -41,29 +41,24 @@ const void* DeviceBuffer::data() const { return mpDeviceData; }
 int DeviceBuffer::size() const { return mSize; }
 
 void DeviceBuffer::copyFromHost(const void* pHostData) {
-    CRAYSTAL_ASSERT(mpDeviceData != nullptr && pHostData != nullptr);
-    CRAYSTAL_ASSERT(mSize != 0);
-
-    CRAYSTAL_CUDA_CHECK(
-        cudaMemcpy(mpDeviceData, pHostData, mSize, cudaMemcpyHostToDevice));
+    if (mpDeviceData)
+        CRAYSTAL_CUDA_CHECK(
+            cudaMemcpy(mpDeviceData, pHostData, mSize, cudaMemcpyHostToDevice));
 }
 
 void DeviceBuffer::copyToHost(void* pHostData) const {
-    CRAYSTAL_ASSERT(mpDeviceData != nullptr && pHostData != nullptr);
-    CRAYSTAL_ASSERT(mSize != 0);
-
-    CRAYSTAL_CUDA_CHECK(
-        cudaMemcpy(pHostData, mpDeviceData, mSize, cudaMemcpyDeviceToHost));
+    if (mpDeviceData)
+        CRAYSTAL_CUDA_CHECK(
+            cudaMemcpy(pHostData, mpDeviceData, mSize, cudaMemcpyDeviceToHost));
 }
 
 void DeviceBuffer::memset(unsigned char value) {
-    CRAYSTAL_ASSERT(mpDeviceData != nullptr);
-    CRAYSTAL_ASSERT(mSize != 0);
-    CRAYSTAL_CUDA_CHECK(cudaMemset(mpDeviceData, value, mSize));
+    if (mpDeviceData)
+        CRAYSTAL_CUDA_CHECK(cudaMemset(mpDeviceData, value, mSize));
 }
 
 void DeviceBuffer::free() {
-    CRAYSTAL_CUDA_CHECK(cudaFree(mpDeviceData));
+    if (mpDeviceData) CRAYSTAL_CUDA_CHECK(cudaFree(mpDeviceData));
     mpDeviceData = nullptr;
 }
 

@@ -28,34 +28,21 @@ __global__ void renderKernel(const SceneView* pScene,
     pSensor->addSample(color, pixel);
 }
 
-void crayRenderSample() {
-    // Build scene
+void crayRenderSample(const Scene::Ref& pScene) {
+    auto pCamera = pScene->getCamera();
+    auto pSensor = pCamera->getSensor();
+    pSensor->updateDeviceData();
+    pCamera->updateDeviceData();
 
-    SceneData data;
-    SphereData sphere;
-    sphere.center = Float3(0);
-    sphere.radius = 1.f;
-    data.spheres.push_back(sphere);
+    UInt2 size = pSensor->getSize();
 
-    Scene scene(std::move(data));
+    // renderKernel<<<dim3(size.x, size.y, 1), dim3(16, 16, 1)>>>(
+    //     pScene->getDeviceView(), pCamera->getDeviceView(),
+    //     pSensor->getDeviceView());
 
-    UInt2 size(512, 512);
-
-    Sensor sensor(size, 1);
-    sensor.updateDeviceData();
-
-    Camera cam;
-    cam.setWorldPosition(Float3(0, 0, 5));
-    cam.setTarget(Float3(0, 0, 0));
-    cam.calculateCameraData();
-    cam.updateDeviceData();
-
-    renderKernel<<<dim3(size.x, size.y, 1), dim3(16, 16, 1)>>>(
-        scene.getDeviceView(), cam.getDeviceView(), sensor.getDeviceView());
-
-    sensor.readbackDeviceData();
-    auto pImage = sensor.createImage();
-    pImage->writeEXR("walkthrough.exr");
+    // pSensor->readbackDeviceData();
+    // auto pImage = pSensor->createImage();
+    // pImage->writeEXR("walkthrough.exr");
 }
 
 }  // namespace CRay

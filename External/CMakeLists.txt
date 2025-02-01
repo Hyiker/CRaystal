@@ -11,10 +11,7 @@ CPMAddPackage(
     "FMT_DOC OFF"
     "FMT_TEST OFF"
     "FMT_UNICODE ON"
-)
-set_target_properties(fmt PROPERTIES
-    POSITION_INDEPENDENT_CODE ON
-    FOLDER "Libraries"
+    "BUILD_SHARED_LIBS OFF"
 )
 
 # glm
@@ -25,6 +22,9 @@ CPMAddPackage(
     GITHUB_REPOSITORY g-truc/glm
     OPTIONS
     "GLM_ENABLE_CXX_20 ON"
+    "GLM_BUILD_LIBRARY ON"
+    "BUILD_STATIC_LIBS ON"
+    "BUILD_SHARED_LIBS OFF"
 )
 
 # catch2
@@ -47,4 +47,29 @@ CPMAddPackage(
     OPTIONS
     "TINYEXR_BUILD_SAMPLE OFF"
     "TINYEXR_USE_MINIZ ON"
+    "BUILD_STATIC_LIBS ON"
+)
+
+# assimp
+message(STATUS "Configure Assimp")
+CPMAddPackage(
+    NAME assimp
+    VERSION 5.4.3
+    GITHUB_REPOSITORY assimp/assimp
+    OPTIONS
+    "ASSIMP_INJECT_DEBUG_POSTFIX OFF"
+    "BUILD_SHARED_LIBS ON"
+)
+set_target_properties(assimp PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY ${CRAYSTAL_RUNTIME_OUTPUT_DIRECTORY})
+
+# pugixml
+message(STATUS "Configure pugixml")
+CPMAddPackage(
+    NAME pugixml
+    VERSION 1.15
+    GITHUB_REPOSITORY zeux/pugixml
+    OPTIONS
+    "PUGIXML_INSTALL OFF"
+    "BUILD_SHARED_LIBS OFF"
 )

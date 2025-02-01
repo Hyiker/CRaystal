@@ -54,6 +54,7 @@ set(CRAYSTAL_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 # -----------------------------------------------------------------------------
 # External dependencies
 # -----------------------------------------------------------------------------
+SET(CMAKE_DEBUG_POSTFIX "")
 add_subdirectory(External)
 
 message(STATUS "CRAYSTAL_HAS_CUDA: ${CRAYSTAL_HAS_CUDA}")

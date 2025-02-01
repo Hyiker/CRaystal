@@ -32,9 +32,12 @@ SceneView::createIntersection(const RayHit& rayHit) const {
 
 Scene::Scene(SceneData&& data) {
     mpSphereManager = std::make_shared<SphereManager>(data.spheres);
+    mpMeshManager = std::make_shared<TriangleMeshManager>(data.meshes);
+
     mpDeviceSceneView = std::make_unique<DeviceBuffer>(sizeof(SceneView));
 
     mSceneView.sphereSOA = mpSphereManager->getDeviceView();
+    mSceneView.meshSOA = mpMeshManager->getDeviceView();
     mpDeviceSceneView->copyFromHost(&mSceneView);
 }
 

@@ -31,6 +31,10 @@ class CRAYSTAL_API Camera : public HostObject {
 
     const CameraProxy& getData() const { return mData; }
 
+    void setSensor(const Sensor::Ref& pSensor) { mpSensor = pSensor; }
+
+    Sensor::Ref getSensor() { return mpSensor; }
+
     void calculateCameraData() const;
 
     void updateDeviceData() const override;
@@ -38,6 +42,8 @@ class CRAYSTAL_API Camera : public HostObject {
     ~Camera();
 
    private:
+    Sensor::Ref mpSensor;
+
     mutable CameraProxy mData;
 
     std::unique_ptr<DeviceBuffer> mpDeviceData;

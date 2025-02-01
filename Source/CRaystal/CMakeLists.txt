@@ -44,6 +44,8 @@ target_sources(CRaystal PRIVATE
     Utils/CudaUtils.h
     Utils/Image.cpp
     Utils/Image.h
+    Utils/Importer.cpp
+    Utils/Importer.h
     Utils/Logger.cpp
     Utils/Logger.h
 )
@@ -203,5 +205,6 @@ target_link_libraries(CRaystal
     PUBLIC
     fmt::fmt glm::glm
     PRIVATE
+    assimp::assimp pugixml
     tinyexr
 )

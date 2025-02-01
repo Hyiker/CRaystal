@@ -12,12 +12,15 @@ Camera::Camera() : mpDeviceData(nullptr) {
 
 Camera::Camera(Camera&& other) noexcept
     : mData(std::move(other.mData)),
+      mpSensor(std::move(other.mpSensor)),
       mpDeviceData(std::move(other.mpDeviceData)) {
     other.mpDeviceData = nullptr;
+    other.mpSensor = nullptr;
 }
 
 Camera& Camera::operator=(Camera&& other) noexcept {
     if (this != &other) {
+        mpSensor = std::move(other.mpSensor);
         mData = std::move(other.mData);
         mpDeviceData = std::move(other.mpDeviceData);
         other.mpDeviceData = nullptr;
@@ -35,9 +38,7 @@ void Camera::calculateCameraData() const {
     mData.cameraV = normalize(cross(mData.cameraU, mData.cameraW));
 }
 
-void Camera::updateDeviceData() const {
-    mpDeviceData->copyFromHost(&mData);
-}
+void Camera::updateDeviceData() const { mpDeviceData->copyFromHost(&mData); }
 
 Camera::~Camera() = default;
 }  // namespace CRay
