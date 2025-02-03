@@ -22,7 +22,7 @@ __global__ void renderKernel(const SceneView* pScene,
     if (pScene->intersect(rayHit)) {
         const Intersection it = pScene->createIntersection(rayHit);
 
-        color = Spectrum(it.faceNormal);
+        color = Spectrum(it.getOrientedFaceNormal());
     }
 
     pSensor->addSample(color, pixel);
@@ -36,13 +36,13 @@ void crayRenderSample(const Scene::Ref& pScene) {
 
     UInt2 size = pSensor->getSize();
 
-    // renderKernel<<<dim3(size.x, size.y, 1), dim3(16, 16, 1)>>>(
-    //     pScene->getDeviceView(), pCamera->getDeviceView(),
-    //     pSensor->getDeviceView());
+    renderKernel<<<dim3(size.x, size.y, 1), dim3(16, 16, 1)>>>(
+        pScene->getDeviceView(), pCamera->getDeviceView(),
+        pSensor->getDeviceView());
 
-    // pSensor->readbackDeviceData();
-    // auto pImage = pSensor->createImage();
-    // pImage->writeEXR("walkthrough.exr");
+    pSensor->readbackDeviceData();
+    auto pImage = pSensor->createImage();
+    pImage->writeEXR("walkthrough.exr");
 }
 
 }  // namespace CRay

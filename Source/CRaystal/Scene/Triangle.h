@@ -16,11 +16,14 @@ struct CRAYSTAL_API VertexData {
 
 struct CRAYSTAL_API TriangleData {
     VertexData vData[3];
+
+    CRAYSTAL_DEVICE_HOST Float3 getFaceNormal() const;
 };
 
 struct CRAYSTAL_API MeshDesc {
     uint32_t indexOffset;
     uint32_t indexCount;
+    uint32_t vertexOffset;
 };
 
 /** Host side mesh data storage.

@@ -7,6 +7,15 @@ CRAYSTAL_DEVICE bool SceneView::intersect(RayHit& rayHit) const {
     for (uint32_t i = 0; i < sphereSOA.count; i++) {
         intersected |= intersectShape(PrimitiveID(i), sphereSOA, rayHit);
     }
+
+    PrimitiveID primitiveID = 0;
+    for (uint32_t i = 0; i < meshSOA.nMesh; i++) {
+        const auto& meshDesc = meshSOA.pMeshDescs[i];
+        for (uint32_t j = 0; j < meshDesc.indexCount / 3; j++) {
+            intersected |=
+                intersectShape(PrimitiveID(primitiveID++), meshSOA, rayHit);
+        }
+    }
     return intersected;
 }
 
@@ -24,6 +33,10 @@ SceneView::createIntersection(const RayHit& rayHit) const {
         case HitType::Sphere: {
             SphereData sphere = sphereSOA.getSphere(hit.primitiveIndex);
             faceNormal = normalize(posW - sphere.center);
+        } break;
+        case HitType::Triangle: {
+            TriangleData triangle = meshSOA.getTriangle(hit.primitiveIndex);
+            faceNormal = triangle.getFaceNormal();
         } break;
     }
 

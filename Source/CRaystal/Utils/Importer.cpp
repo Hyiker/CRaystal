@@ -124,6 +124,9 @@ Scene::Ref Importer::import(const std::filesystem::path& path) {
 
     auto pScene = std::make_shared<Scene>(std::move(sceneData));
     pScene->setCamera(pCamera);
+
+    logInfo("{} Meshes imported.", sceneData.meshes.size());
+
     return pScene;
 }
 

@@ -17,5 +17,10 @@ struct CRAYSTAL_API Intersection {
 
     CRAYSTAL_DEVICE_HOST Intersection(Float3 posW, Float3 faceNormal,
                                       Float3 shadingNormal, Float3 viewW);
+
+    CRAYSTAL_DEVICE_HOST Float3 getOrientedFaceNormal() const {
+        return isFrontFacing ? faceNormal : -faceNormal;
+    }
 };
+
 }  // namespace CRay

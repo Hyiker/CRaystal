@@ -1,7 +1,19 @@
+#include <algorithm>
+#include <iterator>
+
 #include "Core/Error.h"
 #include "Math/MathDefs.h"
 #include "Triangle.h"
 namespace CRay {
+
+CRAYSTAL_DEVICE_HOST Float3 TriangleData::getFaceNormal() const {
+    Float3 edge1 = vData[1].position - vData[0].position;
+    Float3 edge2 = vData[2].position - vData[0].position;
+
+    Float3 normal = cross(edge1, edge2);
+
+    return normalize(normal);
+}
 
 CRAYSTAL_DEVICE bool TriangleMeshSOA::intersect(PrimitiveID id, const Ray& ray,
                                                 HitInfo& hitInfo,
@@ -49,9 +61,9 @@ TriangleMeshSOA::getTriangle(PrimitiveID id) const {
 
     [[unroll]]
     for (int i = 0; i < 3; i++) {
-        data.vData[i].position = pPosition[vIndex[0]];
-        data.vData[i].normal = pNormal[vIndex[1]];
-        data.vData[i].texCrd = pTexCrd[vIndex[2]];
+        data.vData[i].position = pPosition[vIndex[i]];
+        data.vData[i].normal = pNormal[vIndex[i]];
+        data.vData[i].texCrd = pTexCrd[vIndex[i]];
     }
 
     return data;
@@ -66,16 +78,21 @@ TriangleMeshManager::TriangleMeshManager(
     std::vector<MeshDesc> descs;
 
     for (const MeshData& mesh : meshData) {
-        uint32_t indexCnt = mesh.index.size();
         MeshDesc desc;
-        desc.indexCount = indexCnt;
+        desc.indexCount = mesh.index.size();
         desc.indexOffset = index.size();
+        desc.vertexOffset = position.size();
 
-        position.insert(position.begin(), mesh.position.begin(),
+        position.insert(position.end(), mesh.position.begin(),
                         mesh.position.end());
-        normal.insert(normal.begin(), mesh.normal.begin(), mesh.normal.end());
-        texCrd.insert(texCrd.begin(), mesh.texCrd.begin(), mesh.texCrd.end());
-        index.insert(index.begin(), mesh.index.begin(), mesh.index.end());
+        normal.insert(normal.end(), mesh.normal.begin(), mesh.normal.end());
+        texCrd.insert(texCrd.end(), mesh.texCrd.begin(), mesh.texCrd.end());
+        // TODO: use better indexing
+        std::transform(mesh.index.begin(), mesh.index.end(),
+                       std::back_inserter(index),
+                       [offset = desc.vertexOffset](uint32_t value) {
+                           return value + offset;
+                       });
         descs.push_back(desc);
     }
 

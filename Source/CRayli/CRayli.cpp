@@ -8,6 +8,8 @@ int main(int argc, char const *argv[]) {
     Spectrum::initialize();
 
     Importer importer;
-    importer.import(argv[1]);
+    auto pScene = importer.import(argv[1]);
+
+    crayRenderSample(pScene);
     return 0;
 }
