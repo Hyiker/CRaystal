@@ -21,9 +21,9 @@ struct CRAYSTAL_API SensorData {
         return size.x * xy.y + xy.x;
     }
 
-    CRAYSTAL_DEVICE_HOST void addSample(const Spectrum& sample, Float2 xy) {
-        dataArray[getIndex(UInt2(xy))] += sample * weight;
-    }
+    /** Add sample to sensor with triangle filter.
+     */
+    CRAYSTAL_DEVICE void addSample(const Spectrum& sample, Float2 xy);
 };
 
 class CRAYSTAL_API Sensor : public HostObject {

@@ -44,7 +44,7 @@ class SpectrumBase {
         }
     }
 
-    CRAYSTAL_DEVICE_HOST static consteval int size() { return N; }
+    CRAYSTAL_DEVICE_HOST static constexpr int size() { return N; }
 
     CRAYSTAL_DEVICE_HOST Float& operator[](int i) { return mData[i]; }
 

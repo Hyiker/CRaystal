@@ -1,6 +1,40 @@
 #include "Error.h"
 #include "Sensor.h"
 namespace CRay {
+
+CRAYSTAL_DEVICE void atomicAdd(Spectrum& lhs, const Spectrum& rhs) {
+    [[unroll]]
+    for (int i = 0; i < lhs.size(); i++) {
+        ::atomicAdd(&lhs[i], rhs[i]);
+    }
+}
+
+CRAYSTAL_DEVICE Float evalTriangleFilter(Float filterRadius, Float2 xy) {
+    return max(0.0f, filterRadius - abs(xy.x)) *
+           max(0.0f, filterRadius - abs(xy.y));
+}
+
+CRAYSTAL_DEVICE void SensorData::addSample(const Spectrum& sample, Float2 xy) {
+    // TODO: optimize me
+    Int2 pMin = Int2(floor(xy - Float2(1.0f)));
+    Int2 pMax = Int2(ceil(xy + Float2(1.0f)));
+
+    pMin = max(pMin, Int2(0));
+    pMax = min(pMax, Int2(size) - Int2(1));
+
+    for (int y = pMin.y; y <= pMax.y; y++) {
+        for (int x = pMin.x; x <= pMax.x; x++) {
+            Float2 p = Float2(x, y) + Float2(0.5f);
+            Float2 d = xy - p;
+
+            Float w = evalTriangleFilter(1.0, d);
+
+            uint32_t idx = getIndex(UInt2(x, y));
+            atomicAdd(dataArray[idx], sample * w);
+        }
+    }
+}
+
 Sensor::Sensor(UInt2 size, uint32_t spp) {
     uint32_t area = size.x * size.y;
 
@@ -29,6 +63,7 @@ Sensor& Sensor::operator=(Sensor&& other) noexcept {
     }
     return *this;
 }
+
 SensorData* Sensor::getDeviceView() const {
     return (SensorData*)mpDeviceConstData->data();
 }
