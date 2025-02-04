@@ -21,3 +21,4 @@
 // Utils
 #include "Utils/Image.h"
 #include "Utils/Logger.h"
+#include "Utils/Progress.h"

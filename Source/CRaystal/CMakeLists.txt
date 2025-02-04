@@ -48,6 +48,8 @@ target_sources(CRaystal PRIVATE
     Utils/Importer.h
     Utils/Logger.cpp
     Utils/Logger.h
+    Utils/Progress.cpp
+    Utils/Progress.h
 )
 
 target_precompile_headers(CRaystal
@@ -206,5 +208,5 @@ target_link_libraries(CRaystal
     fmt::fmt glm::glm
     PRIVATE
     assimp::assimp pugixml
-    tinyexr
+    tinyexr indicators
 )

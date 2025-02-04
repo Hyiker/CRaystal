@@ -1,9 +1,12 @@
+
 #include "CRaystal.h"
+#include "Utils/Progress.h"
 #include "Walkthrough.h"
+
 namespace CRay {
 
-__global__ void renderKernel(const SceneView* pScene,
-                             const CameraProxy* pCamera, SensorData* pSensor) {
+__global__ void renderFrame(const SceneView* pScene, const CameraProxy* pCamera,
+                            SensorData* pSensor) {
     UInt2 xy(blockIdx.x * blockDim.x + threadIdx.x,
              blockIdx.y * blockDim.y + threadIdx.y);
 
@@ -31,14 +34,19 @@ __global__ void renderKernel(const SceneView* pScene,
 void crayRenderSample(const Scene::Ref& pScene) {
     auto pCamera = pScene->getCamera();
     auto pSensor = pCamera->getSensor();
+
     pSensor->updateDeviceData();
     pCamera->updateDeviceData();
 
     UInt2 size = pSensor->getSize();
 
-    renderKernel<<<dim3(size.x, size.y, 1), dim3(16, 16, 1)>>>(
-        pScene->getDeviceView(), pCamera->getDeviceView(),
-        pSensor->getDeviceView());
+    for (int i : Progress(pSensor->getSPP(), "Render progress ")) {
+        renderFrame<<<dim3(size.x, size.y, 1), dim3(16, 16, 1)>>>(
+            pScene->getDeviceView(), pCamera->getDeviceView(),
+            pSensor->getDeviceView());
+
+        cudaDeviceSynchronize();
+    }
 
     pSensor->readbackDeviceData();
     auto pImage = pSensor->createImage();

@@ -15,6 +15,7 @@ namespace CRay {
 struct CRAYSTAL_API SensorData {
     Spectrum* dataArray;
     UInt2 size = UInt2(512u);  ///< Sensor film size.
+    uint32_t spp = 1u;         ///< Samples per pixel.
     Float weight = 1.f;        ///< Sample base weight located at pixel + 0.5.
 
     CRAYSTAL_DEVICE_HOST uint32_t getIndex(UInt2 xy) const {
@@ -30,7 +31,7 @@ class CRAYSTAL_API Sensor : public HostObject {
    public:
     using Ref = std::shared_ptr<Sensor>;
 
-    Sensor(UInt2 size, uint32_t spp);
+    Sensor(UInt2 size, uint32_t spp = 8u);
 
     Sensor(const Sensor& other) = delete;
     Sensor(Sensor&& other) noexcept;
@@ -42,7 +43,7 @@ class CRAYSTAL_API Sensor : public HostObject {
     void readbackDeviceData() override;
     void updateDeviceData() const override;
 
-    uint32_t getSPP() const { return mSPP; }
+    uint32_t getSPP() const { return mConstData.spp; }
 
     UInt2 getSize() const { return mConstData.size; }
 
@@ -53,8 +54,6 @@ class CRAYSTAL_API Sensor : public HostObject {
     ~Sensor() = default;
 
    private:
-    uint32_t mSPP;
-
     SensorData mConstData;
     std::vector<Spectrum> mData;
 

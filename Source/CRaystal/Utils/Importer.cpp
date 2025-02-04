@@ -41,7 +41,7 @@ static Camera::Ref createCamera(const pugi::xml_node& cameraNode) {
 
     UInt2 sensorSize(cameraNode.attribute("width").as_uint(),
                      cameraNode.attribute("height").as_uint());
-    auto sensor = std::make_shared<Sensor>(sensorSize, 1);
+    auto sensor = std::make_shared<Sensor>(sensorSize);
 
     camera->setSensor(sensor);
     camera->calculateCameraData();

@@ -27,10 +27,10 @@ CRAYSTAL_DEVICE void SensorData::addSample(const Spectrum& sample, Float2 xy) {
             Float2 p = Float2(x, y) + Float2(0.5f);
             Float2 d = xy - p;
 
-            Float w = evalTriangleFilter(1.0, d);
+            Float filterWeight = evalTriangleFilter(1.0, d) * weight;
 
             uint32_t idx = getIndex(UInt2(x, y));
-            atomicAdd(dataArray[idx], sample * w);
+            atomicAdd(dataArray[idx], sample * filterWeight);
         }
     }
 }
@@ -39,6 +39,7 @@ Sensor::Sensor(UInt2 size, uint32_t spp) {
     uint32_t area = size.x * size.y;
 
     mConstData.size = size;
+    mConstData.spp = spp;
     mConstData.weight = 1.f / Float(spp);
 
     mData.resize(area);

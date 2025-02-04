@@ -47,7 +47,6 @@ CPMAddPackage(
     OPTIONS
     "TINYEXR_BUILD_SAMPLE OFF"
     "TINYEXR_USE_MINIZ ON"
-    "BUILD_STATIC_LIBS ON"
 )
 
 # assimp
@@ -72,4 +71,15 @@ CPMAddPackage(
     OPTIONS
     "PUGIXML_INSTALL OFF"
     "BUILD_SHARED_LIBS OFF"
+)
+
+# Indicators
+message(STATUS "Configure indicators")
+CPMAddPackage(
+    NAME indicators
+    VERSION 2.3
+    GITHUB_REPOSITORY p-ranav/indicators
+    OPTIONS
+    "INDICATORS_BUILD_TESTS OFF"
+    "INDICATORS_SAMPLES OFF"
 )
