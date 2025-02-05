@@ -31,7 +31,7 @@ class CRAYSTAL_API Sensor : public HostObject {
    public:
     using Ref = std::shared_ptr<Sensor>;
 
-    Sensor(UInt2 size, uint32_t spp = 8u);
+    Sensor(UInt2 size, uint32_t spp = 1u);
 
     Sensor(const Sensor& other) = delete;
     Sensor(Sensor&& other) noexcept;

@@ -8,14 +8,16 @@ CRAYSTAL_DEVICE bool SceneView::intersect(RayHit& rayHit) const {
         intersected |= intersectShape(PrimitiveID(i), sphereSOA, rayHit);
     }
 
-    PrimitiveID primitiveID = 0;
-    for (uint32_t i = 0; i < meshSOA.nMesh; i++) {
-        const auto& meshDesc = meshSOA.pMeshDescs[i];
-        for (uint32_t j = 0; j < meshDesc.indexCount / 3; j++) {
-            intersected |=
-                intersectShape(PrimitiveID(primitiveID++), meshSOA, rayHit);
-        }
-    }
+    intersected |= acceleration.intersect(meshSOA, rayHit);
+
+    // PrimitiveID primitiveID = 0;
+    // for (uint32_t i = 0; i < meshSOA.nMesh; i++) {
+    //     const auto& meshDesc = meshSOA.pMeshDescs[i];
+    //     for (uint32_t j = 0; j < meshDesc.indexCount / 3; j++) {
+    //         intersected |=
+    //             intersectShape(PrimitiveID(primitiveID++), meshSOA, rayHit);
+    //     }
+    // }
     return intersected;
 }
 
@@ -44,6 +46,9 @@ SceneView::createIntersection(const RayHit& rayHit) const {
 }
 
 Scene::Scene(SceneData&& data) {
+    mpAcceleration = std::make_shared<AccelerationStructure>();
+    mpAcceleration->build(data);
+
     mpSphereManager = std::make_shared<SphereManager>(data.spheres);
     mpMeshManager = std::make_shared<TriangleMeshManager>(data.meshes);
 
@@ -51,6 +56,7 @@ Scene::Scene(SceneData&& data) {
 
     mSceneView.sphereSOA = mpSphereManager->getDeviceView();
     mSceneView.meshSOA = mpMeshManager->getDeviceView();
+    mSceneView.acceleration = mpAcceleration->getDeviceView();
     mpDeviceSceneView->copyFromHost(&mSceneView);
 }
 

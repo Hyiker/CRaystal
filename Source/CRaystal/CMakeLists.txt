@@ -11,6 +11,8 @@ target_sources(CRaystal PRIVATE
 
     Core/Buffer.cu
     Core/Buffer.h
+    Core/BVH.cu
+    Core/BVH.h
     Core/Enum.h
     Core/Error.cpp
     Core/Error.h
@@ -29,6 +31,8 @@ target_sources(CRaystal PRIVATE
     Core/Walkthrough.cu
     Core/Walkthrough.h
 
+    Math/AABB.h
+    Math/AABB.cu
     Math/CRayMath.h
     Math/MathDefs.h
     Math/Ray.h
@@ -145,6 +149,7 @@ target_compile_options(CRaystal
     $<$<COMPILE_LANGUAGE:CUDA>:
     -diag-suppress=20012
     -diag-suppress=1394
+    --expt-relaxed-constexpr
     >
 
     PRIVATE

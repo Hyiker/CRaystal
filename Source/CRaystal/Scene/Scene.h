@@ -3,6 +3,7 @@
 #include <memory>
 #include <vector>
 
+#include "Core/BVH.h"
 #include "Core/Buffer.h"
 #include "Core/Camera.h"
 #include "Core/Intersection.h"
@@ -14,11 +15,15 @@
 
 namespace CRay {
 
+using AccelerationStructure = BVH;
+
 struct CRAYSTAL_API SceneView {
     // Geometry data
     // Use SOA structs
     SphereSOA sphereSOA;
     TriangleMeshSOA meshSOA;
+
+    AccelerationStructure::DeviceView acceleration;
 
     CRAYSTAL_DEVICE bool intersect(RayHit& rayHit) const;
 
@@ -42,6 +47,8 @@ class CRAYSTAL_API Scene {
     void setCamera(const Camera::Ref& pCamera) { mpCamera = pCamera; }
 
    private:
+    AccelerationStructure::Ref mpAcceleration;
+
     Camera::Ref mpCamera;
 
     // Host data

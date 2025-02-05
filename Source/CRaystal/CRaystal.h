@@ -2,6 +2,7 @@
 
 // Core
 #include "Core/Buffer.h"
+#include "Core/BVH.h"
 #include "Core/Camera.h"
 #include "Core/Error.h"
 #include "Core/Hit.h"
