@@ -31,9 +31,11 @@ __global__ void renderFrame(const SceneView* pScene, const CameraProxy* pCamera,
     pSensor->addSample(color, pixel);
 }
 
-void crayRenderSample(const Scene::Ref& pScene) {
+void crayRenderSample(const Scene::Ref& pScene, int spp) {
     auto pCamera = pScene->getCamera();
     auto pSensor = pCamera->getSensor();
+
+    pSensor->setSPP(spp);
 
     pSensor->updateDeviceData();
     pCamera->updateDeviceData();

@@ -43,6 +43,11 @@ class CRAYSTAL_API Sensor : public HostObject {
     void readbackDeviceData() override;
     void updateDeviceData() const override;
 
+    void setSPP(uint32_t value) {
+        mConstData.spp = value;
+        mConstData.weight = 1.0 / value;
+    }
+
     uint32_t getSPP() const { return mConstData.spp; }
 
     UInt2 getSize() const { return mConstData.size; }

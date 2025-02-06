@@ -9,3 +9,8 @@ set_target_properties(CRayli PROPERTIES
     CUDA_SEPARABLE_COMPILATION ON
     CUDA_RESOLVE_DEVICE_SYMBOLS ON
 )
+
+target_include_directories(CRayli
+    PRIVATE
+    ../../External/CLI11
+)
