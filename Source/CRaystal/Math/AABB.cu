@@ -1,36 +1,48 @@
+#include <thrust/swap.h>
+
 #include "AABB.h"
 #include "Ray.h"
 namespace CRay {
 CRAYSTAL_DEVICE_HOST bool AABB::intersect(const Ray& ray, Float& hitT) const {
-    float tMin = ray.tMin;
-    float tMax = ray.tMax;
+    Float tMin = ray.tMin;
+    Float tMax = ray.tMax;
 
     [[unroll]]
     for (int i = 0; i < 3; ++i) {
-        float invD = 1.f / ray.direction[i];
-        float t0 = (pMin[i] - ray.origin[i]) * invD;
-        float t1 = (pMax[i] - ray.origin[i]) * invD;
+        if (std::abs(pMax[i] - pMin[i]) < kFltEps) {
+            if (std::abs(ray.direction[i]) < kFltEps) {
+                if (std::abs(ray.origin[i] - pMin[i]) > kFltEps) {
+                    return false;
+                }
+                continue;
+            }
+            Float t = (pMin[i] - ray.origin[i]) / ray.direction[i];
+            tMin = std::max(tMin, t);
+            tMax = std::min(tMax, t);
+        } else {
+            Float invD = Float(1) / ray.direction[i];
+            Float t0 = (pMin[i] - ray.origin[i]) * invD;
+            Float t1 = (pMax[i] - ray.origin[i]) * invD;
 
-        if (invD < 0.0f) {
-            float temp = t0;
-            t0 = t1;
-            t1 = temp;
+            if (invD < Float(0)) {
+                thrust::swap(t0, t1);
+            }
+
+            tMin = std::max(tMin, t0);
+            tMax = std::min(tMax, t1);
         }
-
-        tMin = t0 > tMin ? t0 : tMin;
-        tMax = t1 < tMax ? t1 : tMax;
 
         if (tMin > tMax) {
             return false;
         }
     }
 
-    if (tMin <= ray.tMax && tMax >= ray.tMin) {
-        hitT = tMin;
-        return true;
+    if (tMin > ray.tMax || tMax < ray.tMin) {
+        return false;
     }
 
-    return false;
+    hitT = tMin;
+    return true;
 }
 
 }  // namespace CRay

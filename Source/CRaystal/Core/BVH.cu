@@ -37,11 +37,12 @@ CRAYSTAL_DEVICE bool BVHData::intersect(const TriangleMeshSOA& meshSOA,
         if (std::holds_alternative<BVHNode::LeafProp>(node.props)) {
             const auto& leafProp = std::get<BVHNode::LeafProp>(node.props);
             for (uint32_t i = 0; i < leafProp.leafCount; ++i) {
-                PrimitiveID primID = leafProp.leafOffset + i;
+                PrimitiveID primID =
+                    bvhToMeshPrimitiveIndex[leafProp.leafOffset + i];
 
                 if (intersectShape(primID, meshSOA, rayHit)) {
                     isHit = true;
-                    // closestT = rayHit.hitT;
+                    closestT = std::min(closestT, rayHit.hitT);
                 }
             }
         } else {
@@ -50,8 +51,8 @@ CRAYSTAL_DEVICE bool BVHData::intersect(const TriangleMeshSOA& meshSOA,
             const BVHNode& leftChild = blasNodes[internalProp.left];
             const BVHNode& rightChild = blasNodes[internalProp.right];
 
-            float leftT = kFltInf;
-            float rightT = kFltInf;
+            Float leftT = kFltInf;
+            Float rightT = kFltInf;
             bool hitLeft = leftChild.bounds.intersect(rayHit.ray, leftT);
             bool hitRight = rightChild.bounds.intersect(rayHit.ray, rightT);
 
@@ -84,7 +85,7 @@ CRAYSTAL_DEVICE bool BVHData::intersect(const TriangleMeshSOA& meshSOA,
 
 BVH::BVH() {}
 
-void BVH::build(SceneData& data) {
+void BVH::build(const SceneData& data) {
     logInfo("Building BVH");
     // 1. Collect triangle data
     gatherTriangles(data);
@@ -125,6 +126,7 @@ void BVH::gatherTriangles(const SceneData& data) {
     mBuildTris.clear();
     mBuildTris.reserve(totalTris);
 
+    PrimitiveID primitiveIndex = 0u;
     for (size_t meshIdx = 0; meshIdx < data.meshes.size(); ++meshIdx) {
         const auto& mesh = data.meshes[meshIdx];
         for (size_t i = 0; i < mesh.index.size(); i += 3) {
@@ -138,7 +140,7 @@ void BVH::gatherTriangles(const SceneData& data) {
             tri.bounds |= v1;
             tri.bounds |= v2;
             tri.meshIndex = meshIdx;
-            tri.triIndex = i / 3;
+            tri.triIndex = primitiveIndex++;
 
             mBuildTris.push_back(tri);
         }
@@ -230,6 +232,7 @@ std::pair<uint32_t, Float> BVH::findBestSplit(
                 NUM_BINS - 1,
                 static_cast<int>((tri.centroid[axis] - nodeBounds.pMin[axis]) *
                                  scale));
+            binIndex = std::clamp(binIndex, 0, NUM_BINS - 1);
             bins[binIndex].bounds |= tri.bounds;
             bins[binIndex].triCount++;
         }
@@ -297,7 +300,7 @@ Float BVH::evaluateSAH(const AABB& nodeBounds, const AABB& leftBounds,
                                rootSA;
 }
 
-void BVH::createFinalBVH(SceneData& data,
+void BVH::createFinalBVH(const SceneData& data,
                          const std::vector<uint32_t>& finalIndices,
                          const AABB& rootBounds, uint32_t rootIndex) {
     mpDeviceNodeData =
@@ -311,32 +314,27 @@ void BVH::createFinalBVH(SceneData& data,
     // Create node data
     mView.blasNodes = (BVHNode*)mpDeviceNodeData->data();
 
-    reorderMeshData(data, finalIndices);
+    createBVHToMeshMapping(data, finalIndices);
 
     mBuildStats.nodeCount = mNodes.size();
 }
 
-void BVH::reorderMeshData(SceneData& data,
-                          const std::vector<uint32_t>& finalIndices) {
-    // Create reordered data for each mesh
-    std::vector<MeshData> reorderedMeshes(data.meshes.size());
+void BVH::createBVHToMeshMapping(const SceneData& data,
+                                 const std::vector<uint32_t>& finalIndices) {
+    // Create index mapper
+    std::vector<uint32_t> bvhToMesh(finalIndices.size());
 
     for (size_t i = 0; i < finalIndices.size(); ++i) {
-        const auto& tri = mBuildTris[finalIndices[i]];
-        auto& srcMesh = data.meshes[tri.meshIndex];
-        auto& dstMesh = reorderedMeshes[tri.meshIndex];
+        // BVH primitive index
+        uint32_t bvhIndex = finalIndices[i];
+        const auto& tri = mBuildTris[bvhIndex];
 
-        for (int j = 0; j < 3; ++j) {
-            uint32_t srcIdx = srcMesh.index[tri.triIndex * 3 + j];
-
-            dstMesh.position.push_back(srcMesh.position[srcIdx]);
-            dstMesh.normal.push_back(srcMesh.normal[srcIdx]);
-            dstMesh.texCrd.push_back(srcMesh.texCrd[srcIdx]);
-            dstMesh.index.push_back(dstMesh.position.size() - 1);
-        }
+        bvhToMesh[i] = tri.triIndex;
     }
-
-    data.meshes = std::move(reorderedMeshes);
+    mpDeviceBVHToMeshIndex =
+        std::make_unique<DeviceBuffer>(sizeof(uint32_t) * bvhToMesh.size());
+    mpDeviceBVHToMeshIndex->copyFromHost(bvhToMesh.data());
+    mView.bvhToMeshPrimitiveIndex = (uint32_t*)mpDeviceBVHToMeshIndex->data();
 }
 
 BVH::~BVH() {}

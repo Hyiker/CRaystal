@@ -16,8 +16,8 @@ struct SceneData;
 
 struct CRAYSTAL_API BVHNode {
     struct LeafProp {
-        uint32_t leafOffset;
-        uint32_t leafCount;
+        uint32_t leafOffset;  ///< Primitive offset.
+        uint32_t leafCount;   ///< Primitive count.
     };
 
     struct InternalProp {
@@ -38,6 +38,8 @@ struct CRAYSTAL_API BVHData {
     BLAS blas;
 
     BVHNode* blasNodes;
+    uint32_t* bvhToMeshPrimitiveIndex;  ///< bvh primitive index -> mesh
+                                        ///< primitive index
 
     CRAYSTAL_DEVICE bool intersect(const TriangleMeshSOA& meshSOA,
                                    RayHit& rayHit) const;
@@ -52,7 +54,7 @@ class CRAYSTAL_API BVH {
 
     /** Build BVH from scene data.
      */
-    void build(SceneData& data);
+    void build(const SceneData& data);
 
     DeviceView getDeviceView() const;
 
@@ -92,12 +94,12 @@ class CRAYSTAL_API BVH {
     float evaluateSAH(const AABB& nodeBounds, const AABB& leftBounds,
                       const AABB& rightBounds, int leftCount, int rightCount);
 
-    void createFinalBVH(SceneData& data,
+    void createFinalBVH(const SceneData& data,
                         const std::vector<uint32_t>& finalIndices,
                         const AABB& rootBounds, uint32_t rootIndex);
 
-    void reorderMeshData(SceneData& data,
-                         const std::vector<uint32_t>& finalIndices);
+    void createBVHToMeshMapping(const SceneData& data,
+                                const std::vector<uint32_t>& finalIndices);
 
     static constexpr int NUM_BINS = 32;
     static constexpr uint32_t MIN_TRIS_PER_LEAF = 4;
@@ -113,6 +115,7 @@ class CRAYSTAL_API BVH {
 
     // GPU Buffers
     std::unique_ptr<DeviceBuffer> mpDeviceNodeData;
+    std::unique_ptr<DeviceBuffer> mpDeviceBVHToMeshIndex;
 };
 
 }  // namespace CRay
