@@ -1,12 +1,13 @@
 
 #include "CRaystal.h"
+#include "Core/Sampler.h"
 #include "Utils/Progress.h"
 #include "Walkthrough.h"
 
 namespace CRay {
 
-__global__ void renderFrame(const SceneView* pScene, const CameraProxy* pCamera,
-                            SensorData* pSensor) {
+__global__ void renderFrame(uint32_t frame, const SceneView* pScene,
+                            const CameraProxy* pCamera, SensorData* pSensor) {
     UInt2 xy(blockIdx.x * blockDim.x + threadIdx.x,
              blockIdx.y * blockDim.y + threadIdx.y);
 
@@ -15,7 +16,8 @@ __global__ void renderFrame(const SceneView* pScene, const CameraProxy* pCamera,
         return;
     }
 
-    Float2 pixel = Float2(xy) + Float2(0.5);
+    Sampler sampler(xy, frame);
+    Float2 pixel = Float2(xy) + sampler.nextSample2D();
 
     auto ray = pCamera->generateRay(sensorSize, pixel);
     Spectrum color;
@@ -43,7 +45,7 @@ void crayRenderSample(const Scene::Ref& pScene, int spp) {
     UInt2 size = pSensor->getSize();
 
     for (int i : Progress(pSensor->getSPP(), "Render progress ")) {
-        renderFrame<<<dim3(size.x, size.y, 1), dim3(16, 16, 1)>>>(
+        renderFrame<<<dim3(size.x, size.y, 1), dim3(16, 16, 1)>>>(i,
             pScene->getDeviceView(), pCamera->getDeviceView(),
             pSensor->getDeviceView());
 

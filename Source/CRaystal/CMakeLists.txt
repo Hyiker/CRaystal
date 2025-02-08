@@ -23,6 +23,8 @@ target_sources(CRaystal PRIVATE
     Core/Intersection.h
     Core/Macros.h
     Core/Object.h
+    Core/Sampler.cu
+    Core/Sampler.h
     Core/Spectrum.cpp
     Core/Spectrum.h
     Core/SpectrumTabData.h
