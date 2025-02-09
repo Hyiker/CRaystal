@@ -24,6 +24,7 @@ struct CRAYSTAL_API MeshDesc {
     uint32_t indexOffset;
     uint32_t indexCount;
     uint32_t vertexOffset;
+    uint32_t materialID;
 };
 
 /** Host side mesh data storage.
@@ -33,6 +34,7 @@ struct CRAYSTAL_API MeshData {
     std::vector<Float3> normal;
     std::vector<Float2> texCrd;
     std::vector<uint32_t> index;
+    uint32_t materialID;
 };
 
 class CRAYSTAL_API TriangleMeshManager : public ShapeManagerBase {
@@ -46,13 +48,17 @@ class CRAYSTAL_API TriangleMeshManager : public ShapeManagerBase {
         Float3* pPosition;
         Float3* pNormal;
         Float2* pTexCrd;
-        // Global vertex buffer
+        // Global index buffer
         uint32_t* pIndex;
+        // Primitive index to mesh index
+        uint32_t* pPrimitiveToMesh;
 
         CRAYSTAL_DEVICE bool intersect(PrimitiveID id, const Ray& ray,
                                        HitInfo& hitInfo, Float& hitT) const;
 
         CRAYSTAL_DEVICE TriangleData getTriangle(PrimitiveID id) const;
+
+        CRAYSTAL_DEVICE MeshDesc getMeshDesc(PrimitiveID id) const;
     };
 
     TriangleMeshManager(const std::vector<MeshData>& meshData);
@@ -67,6 +73,7 @@ class CRAYSTAL_API TriangleMeshManager : public ShapeManagerBase {
     std::unique_ptr<DeviceBuffer> mpNormalBuffer;
     std::unique_ptr<DeviceBuffer> mpTexCrdBuffer;
     std::unique_ptr<DeviceBuffer> mpIndexBuffer;
+    std::unique_ptr<DeviceBuffer> mpPrimitiveToMeshBuffer;
 };
 
 using TriangleMeshSOA = TriangleMeshManager::DeviceView;

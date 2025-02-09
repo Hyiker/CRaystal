@@ -57,7 +57,8 @@ static SceneData createSceneData(const std::filesystem::path& path) {
     const aiScene* scene = importer.ReadFile(
         path.string(), aiProcess_Triangulate | aiProcess_GenNormals |
                            aiProcess_CalcTangentSpace |
-                           aiProcess_JoinIdenticalVertices);
+                           aiProcess_JoinIdenticalVertices |
+                           aiProcess_RemoveRedundantMaterials);
 
     if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE ||
         !scene->mRootNode) {
@@ -72,6 +73,7 @@ static SceneData createSceneData(const std::filesystem::path& path) {
         meshData.position.resize(mesh->mNumVertices);
         meshData.normal.resize(mesh->mNumVertices);
         meshData.texCrd.resize(mesh->mNumVertices);
+        meshData.materialID = mesh->mMaterialIndex;
 
         for (unsigned int j = 0; j < mesh->mNumVertices; j++) {
             meshData.position[j] =
@@ -96,6 +98,45 @@ static SceneData createSceneData(const std::filesystem::path& path) {
                 meshData.index.push_back(face.mIndices[k]);
             }
         }
+    }
+
+    data.materials.resize(scene->mNumMaterials);
+    for (unsigned int i = 0; i < scene->mNumMaterials; i++) {
+        const aiMaterial* material = scene->mMaterials[i];
+        auto& matData = data.materials[i];
+
+        aiColor3D color(0.f, 0.f, 0.f);
+
+        if (material->Get(AI_MATKEY_COLOR_DIFFUSE, color) == AI_SUCCESS) {
+            matData.diffuseRefl =
+                Spectrum::fromRGB(Float3(color.r, color.g, color.b));
+        }
+
+        if (material->Get(AI_MATKEY_COLOR_SPECULAR, color) == AI_SUCCESS) {
+            matData.specularRefl = Spectrum(Float3(color.r, color.g, color.b));
+        }
+
+        float transparency = 0.0f;
+        if (material->Get(AI_MATKEY_OPACITY, transparency) == AI_SUCCESS) {
+            matData.transmittance = Spectrum(1.0f - transparency);
+        }
+
+        float shininess = 0.0f;
+        if (material->Get(AI_MATKEY_SHININESS, shininess) == AI_SUCCESS) {
+            matData.shininess = shininess;
+        }
+
+        float ior = 1.0f;
+        if (material->Get(AI_MATKEY_REFRACTI, ior) == AI_SUCCESS) {
+            matData.IoR = ior;
+        }
+
+        // Determine material type based on properties
+        matData.type = MaterialType::Principled;
+        logDebug(
+            "Loaded material: {}, transparency: {}, shininess: {}, IoR: {}",
+            material->GetName().C_Str(), transparency, matData.shininess,
+            matData.IoR);
     }
 
     return data;

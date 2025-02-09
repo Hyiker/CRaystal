@@ -69,6 +69,10 @@ TriangleMeshSOA::getTriangle(PrimitiveID id) const {
     return data;
 }
 
+CRAYSTAL_DEVICE MeshDesc TriangleMeshSOA::getMeshDesc(PrimitiveID id) const {
+    return pMeshDescs[pPrimitiveToMesh[id]];
+}
+
 TriangleMeshManager::TriangleMeshManager(
     const std::vector<MeshData>& meshData) {
     std::vector<Float3> position;
@@ -82,6 +86,7 @@ TriangleMeshManager::TriangleMeshManager(
         desc.indexCount = mesh.index.size();
         desc.indexOffset = index.size();
         desc.vertexOffset = position.size();
+        desc.materialID = mesh.materialID;
 
         position.insert(position.end(), mesh.position.begin(),
                         mesh.position.end());
@@ -96,6 +101,18 @@ TriangleMeshManager::TriangleMeshManager(
         descs.push_back(desc);
     }
 
+    std::vector<uint32_t> primitiveToMesh(index.size() / 3);
+    uint32_t currentMeshID = 0;
+    for (const auto& desc : descs) {
+        uint32_t startPrimitive = desc.indexOffset / 3u;
+        uint32_t primitiveCount = desc.indexCount / 3u;
+
+        std::fill_n(primitiveToMesh.begin() + startPrimitive, primitiveCount,
+                    currentMeshID);
+
+        currentMeshID++;
+    };
+
     mpMeshDescBuffer =
         std::make_unique<DeviceBuffer>(sizeof(MeshDesc) * descs.size());
     mpPositionBuffer =
@@ -106,12 +123,15 @@ TriangleMeshManager::TriangleMeshManager(
         std::make_unique<DeviceBuffer>(sizeof(Float2) * texCrd.size());
     mpIndexBuffer =
         std::make_unique<DeviceBuffer>(sizeof(uint32_t) * index.size());
+    mpPrimitiveToMeshBuffer = std::make_unique<DeviceBuffer>(
+        sizeof(uint32_t) * primitiveToMesh.size());
 
     mpMeshDescBuffer->copyFromHost(descs.data());
     mpPositionBuffer->copyFromHost(position.data());
     mpNormalBuffer->copyFromHost(normal.data());
     mpTexCrdBuffer->copyFromHost(texCrd.data());
     mpIndexBuffer->copyFromHost(index.data());
+    mpPrimitiveToMeshBuffer->copyFromHost(primitiveToMesh.data());
 
     mView.nMesh = descs.size();
     mView.pMeshDescs = (MeshDesc*)mpMeshDescBuffer->data();
@@ -119,6 +139,7 @@ TriangleMeshManager::TriangleMeshManager(
     mView.pNormal = (Float3*)mpNormalBuffer->data();
     mView.pTexCrd = (Float2*)mpTexCrdBuffer->data();
     mView.pIndex = (uint32_t*)mpIndexBuffer->data();
+    mView.pPrimitiveToMesh = (uint32_t*)mpPrimitiveToMeshBuffer->data();
 }
 
 }  // namespace CRay

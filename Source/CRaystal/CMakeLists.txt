@@ -22,6 +22,8 @@ target_sources(CRaystal PRIVATE
     Core/Intersection.cu
     Core/Intersection.h
     Core/Macros.h
+    Core/Material.cu
+    Core/Material.h
     Core/Object.h
     Core/Sampler.cu
     Core/Sampler.h

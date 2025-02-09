@@ -10,14 +10,6 @@ CRAYSTAL_DEVICE bool SceneView::intersect(RayHit& rayHit) const {
 
     intersected |= acceleration.intersect(meshSOA, rayHit);
 
-    // PrimitiveID primitiveID = 0;
-    // for (uint32_t i = 0; i < meshSOA.nMesh; i++) {
-    //     const auto& meshDesc = meshSOA.pMeshDescs[i];
-    //     for (uint32_t j = 0; j < meshDesc.indexCount / 3; j++) {
-    //         intersected |=
-    //             intersectShape(PrimitiveID(primitiveID++), meshSOA, rayHit);
-    //     }
-    // }
     return intersected;
 }
 
@@ -27,22 +19,27 @@ SceneView::createIntersection(const RayHit& rayHit) const {
 
     Float3 posW = ray.origin + rayHit.hitT * ray.direction;
     Float3 viewW = -normalize(ray.direction);
-    Float3 faceNormal;
+    Float3 faceNormal, shadingNormal;
 
     const HitInfo& hit = rayHit.hitInfo;
+    Float3 barycentric = hit.getBarycentricWeights();
 
     switch (hit.type) {
         case HitType::Sphere: {
             SphereData sphere = sphereSOA.getSphere(hit.primitiveIndex);
             faceNormal = normalize(posW - sphere.center);
+            shadingNormal = faceNormal;
         } break;
         case HitType::Triangle: {
             TriangleData triangle = meshSOA.getTriangle(hit.primitiveIndex);
             faceNormal = triangle.getFaceNormal();
+            shadingNormal = triangle.vData[0].normal * barycentric.x +
+                            triangle.vData[1].normal * barycentric.y +
+                            triangle.vData[2].normal * barycentric.z;
         } break;
     }
 
-    return Intersection(posW, faceNormal, faceNormal, viewW);
+    return Intersection(posW, faceNormal, shadingNormal, viewW);
 }
 
 Scene::Scene(SceneData&& data) {
@@ -51,12 +48,15 @@ Scene::Scene(SceneData&& data) {
 
     mpSphereManager = std::make_shared<SphereManager>(data.spheres);
     mpMeshManager = std::make_shared<TriangleMeshManager>(data.meshes);
+    mpMaterialManager = std::make_shared<MaterialManager>(data.materials);
 
     mpDeviceSceneView = std::make_unique<DeviceBuffer>(sizeof(SceneView));
 
     mSceneView.sphereSOA = mpSphereManager->getDeviceView();
     mSceneView.meshSOA = mpMeshManager->getDeviceView();
     mSceneView.acceleration = mpAcceleration->getDeviceView();
+    mSceneView.materialSystem = mpMaterialManager->getDeviceView();
+
     mpDeviceSceneView->copyFromHost(&mSceneView);
 }
 

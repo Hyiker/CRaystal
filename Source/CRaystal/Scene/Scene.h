@@ -8,6 +8,7 @@
 #include "Core/Camera.h"
 #include "Core/Intersection.h"
 #include "Core/Macros.h"
+#include "Core/Material.h"
 #include "Core/Object.h"
 #include "Shape.h"
 #include "Sphere.h"
@@ -25,6 +26,9 @@ struct CRAYSTAL_API SceneView {
 
     AccelerationStructure::DeviceView acceleration;
 
+    // Material data
+    MaterialView materialSystem;
+
     CRAYSTAL_DEVICE bool intersect(RayHit& rayHit) const;
 
     CRAYSTAL_DEVICE Intersection createIntersection(const RayHit& rayHit) const;
@@ -33,6 +37,8 @@ struct CRAYSTAL_API SceneView {
 struct SceneData {
     std::vector<SphereData> spheres;
     std::vector<MeshData> meshes;
+
+    std::vector<MaterialData> materials;
 };
 
 class CRAYSTAL_API Scene {
@@ -57,6 +63,9 @@ class CRAYSTAL_API Scene {
     // Shape managers
     SphereManager::Ref mpSphereManager;
     TriangleMeshManager::Ref mpMeshManager;
+
+    // Material managers
+    MaterialManager::Ref mpMaterialManager;
 
     // Device data
     std::unique_ptr<DeviceBuffer> mpDeviceSceneView;

@@ -26,8 +26,14 @@ __global__ void renderFrame(uint32_t frame, const SceneView* pScene,
     rayHit.ray = ray;
     if (pScene->intersect(rayHit)) {
         const Intersection it = pScene->createIntersection(rayHit);
+        uint32_t materialID =
+            pScene->meshSOA.getMeshDesc(rayHit.hitInfo.primitiveIndex)
+                .materialID;
 
-        color = Spectrum(it.getOrientedFaceNormal());
+        MaterialData materialData =
+            pScene->materialSystem.getMaterialData(materialID);
+
+        color = Spectrum(materialData.diffuseRefl);
     }
 
     pSensor->addSample(color, pixel);
@@ -45,8 +51,8 @@ void crayRenderSample(const Scene::Ref& pScene, int spp) {
     UInt2 size = pSensor->getSize();
 
     for (int i : Progress(pSensor->getSPP(), "Render progress ")) {
-        renderFrame<<<dim3(size.x, size.y, 1), dim3(16, 16, 1)>>>(i,
-            pScene->getDeviceView(), pCamera->getDeviceView(),
+        renderFrame<<<dim3(size.x, size.y, 1), dim3(16, 16, 1)>>>(
+            i, pScene->getDeviceView(), pCamera->getDeviceView(),
             pSensor->getDeviceView());
 
         cudaDeviceSynchronize();
