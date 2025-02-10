@@ -13,6 +13,7 @@ target_sources(CRaystal PRIVATE
     Core/Buffer.h
     Core/BVH.cu
     Core/BVH.h
+    Core/DeviceArray.h
     Core/Enum.h
     Core/Error.cpp
     Core/Error.h

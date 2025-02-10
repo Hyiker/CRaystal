@@ -39,6 +39,7 @@ struct SceneData {
     std::vector<MeshData> meshes;
 
     std::vector<MaterialData> materials;
+    std::vector<uint32_t> emissiveIndex;
 };
 
 class CRAYSTAL_API Scene {

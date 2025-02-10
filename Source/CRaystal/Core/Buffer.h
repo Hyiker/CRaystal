@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <memory>
 
+#include "DeviceArray.h"
 #include "Macros.h"
 
 namespace CRay {
@@ -27,6 +28,11 @@ class CRAYSTAL_API DeviceBuffer {
     void copyFromHost(const void* hostData);
     void copyToHost(void* hostData) const;
     void memset(unsigned char value);
+
+    template <typename T>
+    DeviceArray<T> getDeviceArray() const {
+        return DeviceArray<T>(static_cast<T*>(mpDeviceData), mSize / sizeof(T));
+    }
 
    private:
     void free();

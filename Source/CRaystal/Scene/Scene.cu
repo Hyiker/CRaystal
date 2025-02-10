@@ -48,7 +48,8 @@ Scene::Scene(SceneData&& data) {
 
     mpSphereManager = std::make_shared<SphereManager>(data.spheres);
     mpMeshManager = std::make_shared<TriangleMeshManager>(data.meshes);
-    mpMaterialManager = std::make_shared<MaterialManager>(data.materials);
+    mpMaterialManager =
+        std::make_shared<MaterialManager>(data.materials, data.emissiveIndex);
 
     mpDeviceSceneView = std::make_unique<DeviceBuffer>(sizeof(SceneView));
 

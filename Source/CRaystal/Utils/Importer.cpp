@@ -4,7 +4,10 @@
 #include <assimp/scene.h>
 
 #include <assimp/Importer.hpp>
+#include <numeric>
 #include <pugixml.hpp>
+#include <sstream>
+#include <unordered_map>
 
 #include "Core/Error.h"
 #include "Logger.h"
@@ -49,7 +52,34 @@ static Camera::Ref createCamera(const pugi::xml_node& cameraNode) {
     return camera;
 }
 
-static SceneData createSceneData(const std::filesystem::path& path) {
+static Spectrum toIllumSpectrum(const std::string& str) {
+    std::string token;
+    Float3 numbers;
+    int idx = 0;
+
+    std::istringstream iss(str);
+    while (std::getline(iss, token, ',') && idx < 3) {
+        std::istringstream convert(token);
+        convert >> numbers[idx];
+        idx++;
+    }
+    return Spectrum::fromRGB(numbers, true);
+}
+
+using EmissiveDict = std::unordered_map<std::string, Spectrum>;
+
+static EmissiveDict createEmissiveDict(const pugi::xml_node& rootNode) {
+    std::unordered_map<std::string, Spectrum> result;
+    for (const auto& lightNode : rootNode.children("light")) {
+        std::string mtlName = lightNode.attribute("mtlname").as_string();
+        std::string radianceStr = lightNode.attribute("radiance").as_string();
+        result[mtlName] = toIllumSpectrum(radianceStr);
+    }
+    return result;
+}
+
+static SceneData createSceneData(const std::filesystem::path& path,
+                                 const EmissiveDict& emissiveDict) {
     SceneData data;
 
     Assimp::Importer importer;
@@ -63,41 +93,6 @@ static SceneData createSceneData(const std::filesystem::path& path) {
     if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE ||
         !scene->mRootNode) {
         CRAYSTAL_THROW("Assimp error: {}", importer.GetErrorString());
-    }
-
-    data.meshes.resize(scene->mNumMeshes);
-    for (unsigned int i = 0; i < scene->mNumMeshes; i++) {
-        const aiMesh* mesh = scene->mMeshes[i];
-        auto& meshData = data.meshes[i];
-
-        meshData.position.resize(mesh->mNumVertices);
-        meshData.normal.resize(mesh->mNumVertices);
-        meshData.texCrd.resize(mesh->mNumVertices);
-        meshData.materialID = mesh->mMaterialIndex;
-
-        for (unsigned int j = 0; j < mesh->mNumVertices; j++) {
-            meshData.position[j] =
-                Float3(mesh->mVertices[j].x, mesh->mVertices[j].y,
-                       mesh->mVertices[j].z);
-
-            if (mesh->HasNormals()) {
-                meshData.normal[j] =
-                    Float3(mesh->mNormals[j].x, mesh->mNormals[j].y,
-                           mesh->mNormals[j].z);
-            }
-
-            if (mesh->HasTextureCoords(0)) {
-                meshData.texCrd[j] = Float2(mesh->mTextureCoords[0][j].x,
-                                            mesh->mTextureCoords[0][j].y);
-            }
-        }
-
-        for (unsigned int j = 0; j < mesh->mNumFaces; j++) {
-            const aiFace& face = mesh->mFaces[j];
-            for (unsigned int k = 0; k < face.mNumIndices; k++) {
-                meshData.index.push_back(face.mIndices[k]);
-            }
-        }
     }
 
     data.materials.resize(scene->mNumMaterials);
@@ -133,10 +128,60 @@ static SceneData createSceneData(const std::filesystem::path& path) {
 
         // Determine material type based on properties
         matData.type = MaterialType::Principled;
+
+        std::string mtlName = material->GetName().C_Str();
+        if (auto it = emissiveDict.find(mtlName); it != emissiveDict.end()) {
+            matData.flags |= (uint32_t)MaterialFlags::IsEmissive;
+            matData.emission = it->second;
+        }
+
         logDebug(
             "Loaded material: {}, transparency: {}, shininess: {}, IoR: {}",
             material->GetName().C_Str(), transparency, matData.shininess,
             matData.IoR);
+    }
+
+    uint32_t primitiveID = 0u;
+    data.meshes.resize(scene->mNumMeshes);
+    for (uint32_t i = 0; i < scene->mNumMeshes; i++) {
+        const aiMesh* mesh = scene->mMeshes[i];
+        auto& meshData = data.meshes[i];
+
+        meshData.position.resize(mesh->mNumVertices);
+        meshData.normal.resize(mesh->mNumVertices);
+        meshData.texCrd.resize(mesh->mNumVertices);
+        meshData.materialID = mesh->mMaterialIndex;
+
+        for (uint32_t j = 0; j < mesh->mNumVertices; j++) {
+            meshData.position[j] =
+                Float3(mesh->mVertices[j].x, mesh->mVertices[j].y,
+                       mesh->mVertices[j].z);
+
+            if (mesh->HasNormals()) {
+                meshData.normal[j] =
+                    Float3(mesh->mNormals[j].x, mesh->mNormals[j].y,
+                           mesh->mNormals[j].z);
+            }
+
+            if (mesh->HasTextureCoords(0)) {
+                meshData.texCrd[j] = Float2(mesh->mTextureCoords[0][j].x,
+                                            mesh->mTextureCoords[0][j].y);
+            }
+        }
+
+        for (uint32_t j = 0; j < mesh->mNumFaces; j++) {
+            const aiFace& face = mesh->mFaces[j];
+            for (uint32_t k = 0; k < face.mNumIndices; k++) {
+                meshData.index.push_back(face.mIndices[k]);
+            }
+            if (data.materials[meshData.materialID].isEmissive()) {
+                uint32_t offset = data.emissiveIndex.size();
+                data.emissiveIndex.resize(offset + face.mNumIndices / 3);
+                std::iota(data.emissiveIndex.begin() + offset,
+                          data.emissiveIndex.end(), primitiveID);
+            }
+            primitiveID += face.mNumIndices / 3;
+        }
     }
 
     return data;
@@ -158,15 +203,19 @@ Scene::Ref Importer::import(const std::filesystem::path& path) {
     // Parse camera
     auto pCamera = createCamera(cameraNode);
 
+    // Parse light
+    auto emissiveDict = createEmissiveDict(doc);
+
     // Parse scene
     auto objPath = path;
     objPath.replace_extension(".obj");
-    auto sceneData = createSceneData(objPath);
+    auto sceneData = createSceneData(objPath, emissiveDict);
 
     auto pScene = std::make_shared<Scene>(std::move(sceneData));
     pScene->setCamera(pCamera);
 
-    logInfo("{} Meshes imported.", sceneData.meshes.size());
+    logInfo("Meshes: {}.", sceneData.meshes.size());
+    logInfo("Emissive triangles: {}.", sceneData.emissiveIndex.size());
 
     return pScene;
 }

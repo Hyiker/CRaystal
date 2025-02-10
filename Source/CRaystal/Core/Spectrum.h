@@ -50,18 +50,6 @@ class SpectrumBase {
 
     CRAYSTAL_DEVICE_HOST Float operator[](int i) const { return mData[i]; }
 
-    CRAYSTAL_DEVICE_HOST T& operator=(const T& other) {
-        std::memcpy(mData, other.mData, sizeof(mData));
-        return *static_cast<T*>(this);
-    }
-
-    CRAYSTAL_DEVICE_HOST T& operator=(T&& other) noexcept {
-        for (int i = 0; i < N; i++) {
-            mData[i] = std::move(other.mData[i]);
-        }
-        return *static_cast<T*>(this);
-    }
-
     CRAYSTAL_DEVICE_HOST T operator+(const T& other) const {
         T result(0);
         for (int i = 0; i < N; ++i) {
@@ -198,6 +186,20 @@ class CRAYSTAL_API RGBSpectrum : public SpectrumBase<3, RGBSpectrum> {
     CRAYSTAL_DEVICE_HOST RGBSpectrum(const RGBSpectrum& spectrum)
         : SpectrumBase(spectrum) {}
 
+    CRAYSTAL_DEVICE_HOST RGBSpectrum& operator=(const RGBSpectrum& other) {
+        for (int i = 0; i < size(); i++) {
+            mData[i] = other.mData[i];
+        }
+        return *this;
+    }
+
+    CRAYSTAL_DEVICE_HOST RGBSpectrum& operator=(RGBSpectrum&& other) noexcept {
+        for (int i = 0; i < size(); i++) {
+            mData[i] = std::move(other.mData[i]);
+        }
+        return *this;
+    }
+
     CRAYSTAL_HOST Float3 toXYZ() const;
 
     CRAYSTAL_HOST Float3 toRGB() const;
@@ -230,6 +232,21 @@ class CRAYSTAL_API BroadSpectrum
 
     CRAYSTAL_DEVICE_HOST BroadSpectrum(const BroadSpectrum& spectrum)
         : SpectrumBase(spectrum) {}
+
+    CRAYSTAL_DEVICE_HOST BroadSpectrum& operator=(const BroadSpectrum& other) {
+        for (int i = 0; i < size(); i++) {
+            mData[i] = other.mData[i];
+        }
+        return *this;
+    }
+
+    CRAYSTAL_DEVICE_HOST BroadSpectrum& operator=(
+        BroadSpectrum&& other) noexcept {
+        for (int i = 0; i < size(); i++) {
+            mData[i] = std::move(other.mData[i]);
+        }
+        return *this;
+    }
 
     CRAYSTAL_HOST Float3 toXYZ() const;
 
