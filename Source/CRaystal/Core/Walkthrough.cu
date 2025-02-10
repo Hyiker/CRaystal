@@ -32,8 +32,11 @@ __global__ void renderFrame(uint32_t frame, const SceneView* pScene,
 
         MaterialData materialData =
             pScene->materialSystem.getMaterialData(materialID);
-
-        color = Spectrum(materialData.diffuseRefl);
+        if (materialData.isEmissive()) {
+            color = Spectrum(materialData.emission);
+        } else {
+            color = Spectrum(materialData.diffuseRefl);
+        }
     }
 
     pSensor->addSample(color, pixel);

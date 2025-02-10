@@ -1,3 +1,5 @@
+#include <cuda.h>
+
 #include "Error.h"
 #include "Sensor.h"
 namespace CRay {
@@ -31,6 +33,7 @@ CRAYSTAL_DEVICE void SensorData::addSample(const Spectrum& sample, Float2 xy) {
 
             uint32_t idx = getIndex(UInt2(x, y));
             atomicAdd(dataArray[idx], sample * filterWeight);
+            ::atomicAdd(&weightArray[idx], filterWeight);
         }
     }
 }
@@ -43,10 +46,13 @@ Sensor::Sensor(UInt2 size, uint32_t spp) {
     mConstData.weight = 1.f / Float(spp);
 
     mData.resize(area);
+    mWeightData.resize(area);
 
     mpDeviceConstData = std::make_unique<DeviceBuffer>(sizeof(SensorData));
     mpDeviceData = std::make_unique<DeviceBuffer>(area * sizeof(Spectrum));
+    mpDeviceWeight = std::make_unique<DeviceBuffer>(area * sizeof(Float));
     mConstData.dataArray = (Spectrum*)mpDeviceData->data();
+    mConstData.weightArray = (Float*)mpDeviceWeight->data();
 }
 
 Sensor::Sensor(Sensor&& other) noexcept
@@ -72,6 +78,7 @@ SensorData* Sensor::getDeviceView() const {
 void Sensor::readbackDeviceData() {
     CRAYSTAL_ASSERT(mpDeviceData != nullptr);
     mpDeviceData->copyToHost(mData.data());
+    mpDeviceWeight->copyToHost(mWeightData.data());
 }
 
 void Sensor::updateDeviceData() const {
@@ -88,6 +95,8 @@ Image::Ref Sensor::createImage() const {
         for (uint32_t x = 0; x < size.x; x++) {
             uint32_t index = mConstData.getIndex(UInt2(x, y));
             Float3 rgb = mData[index].toRGB();
+            Float weightSum = mWeightData[index];
+            rgb /= weightSum;
 
             pImage->setPixel(x, y, 0, rgb.r);
             pImage->setPixel(x, y, 1, rgb.g);
