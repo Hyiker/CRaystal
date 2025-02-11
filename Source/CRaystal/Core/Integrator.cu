@@ -1,13 +1,17 @@
-
-#include "CRaystal.h"
 #include "Core/Sampler.h"
+#include "Integrator.h"
 #include "Utils/Progress.h"
-#include "Walkthrough.h"
 
 namespace CRay {
+PathTraceIntegrator::PathTraceIntegrator() {
+    mpConstDataBuffer = std::make_unique<DeviceBuffer>(sizeof(DeviceView));
+}
 
-__global__ void renderFrame(uint32_t frame, const SceneView* pScene,
-                            const CameraProxy* pCamera, SensorData* pSensor) {
+__global__ void pathTraceKernel(uint32_t frameIdx,
+                                const PathTraceIntegratorView* pIntegrator,
+                                const SceneView* pScene,
+                                const CameraProxy* pCamera,
+                                SensorData* pSensor) {
     UInt2 xy(blockIdx.x * blockDim.x + threadIdx.x,
              blockIdx.y * blockDim.y + threadIdx.y);
 
@@ -16,10 +20,11 @@ __global__ void renderFrame(uint32_t frame, const SceneView* pScene,
         return;
     }
 
-    Sampler sampler(xy, frame);
+    Sampler sampler(xy, frameIdx);
     Float2 pixel = Float2(xy) + sampler.nextSample2D();
 
     auto ray = pCamera->generateRay(sensorSize, pixel);
+
     Spectrum color;
 
     RayHit rayHit;
@@ -42,8 +47,14 @@ __global__ void renderFrame(uint32_t frame, const SceneView* pScene,
     pSensor->addSample(color, pixel);
 }
 
-void crayRenderSample(const Scene::Ref& pScene, int spp) {
-    auto pCamera = pScene->getCamera();
+PathTraceIntegratorView* PathTraceIntegrator::getDeviceView() const {
+    return (PathTraceIntegratorView*)mpConstDataBuffer->data();
+}
+
+void PathTraceIntegrator::dispatch(Scene& scene, int spp) const {
+    mpConstDataBuffer->copyFromHost(&mView);
+
+    auto pCamera = scene.getCamera();
     auto pSensor = pCamera->getSensor();
 
     pSensor->setSPP(spp);
@@ -54,16 +65,14 @@ void crayRenderSample(const Scene::Ref& pScene, int spp) {
     UInt2 size = pSensor->getSize();
 
     for (int i : Progress(pSensor->getSPP(), "Render progress ")) {
-        renderFrame<<<dim3(size.x, size.y, 1), dim3(16, 16, 1)>>>(
-            i, pScene->getDeviceView(), pCamera->getDeviceView(),
+        pathTraceKernel<<<dim3(size.x, size.y, 1), dim3(16, 16, 1)>>>(
+            i, getDeviceView(), scene.getDeviceView(), pCamera->getDeviceView(),
             pSensor->getDeviceView());
 
         cudaDeviceSynchronize();
     }
 
     pSensor->readbackDeviceData();
-    auto pImage = pSensor->createImage();
-    pImage->writeEXR("walkthrough.exr");
 }
 
 }  // namespace CRay

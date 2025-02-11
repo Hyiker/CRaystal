@@ -20,6 +20,8 @@ target_sources(CRaystal PRIVATE
     Core/Frame.cu
     Core/Frame.h
     Core/Hit.h
+    Core/Integrator.cu
+    Core/Integrator.h
     Core/Intersection.cu
     Core/Intersection.h
     Core/Macros.h
@@ -33,8 +35,6 @@ target_sources(CRaystal PRIVATE
     Core/SpectrumTabData.h
     Core/Vec.cpp
     Core/Vec.h
-    Core/Walkthrough.cu
-    Core/Walkthrough.h
 
     Math/AABB.h
     Math/AABB.cu

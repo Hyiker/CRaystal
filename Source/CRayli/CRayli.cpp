@@ -1,11 +1,19 @@
 #include <CLI11.hpp>
 
 #include "CRaystal.h"
-#include "Core/Walkthrough.h"
-#include "Utils/Importer.h"
 
 using namespace CRay;
-int main(int argc, char const *argv[]) {
+
+void crayRenderSample(const PathTraceIntegrator::Ref& pIntegrator,
+                      Scene::Ref pScene, int spp,
+                      const std::filesystem::path& outPath) {
+    pIntegrator->dispatch(*pScene, spp);
+
+    auto pImage = pScene->getCamera()->getSensor()->createImage();
+    pImage->writeEXR(outPath.string());
+}
+
+int main(int argc, char const* argv[]) {
     Logger::init();
     Spectrum::initialize();
 
@@ -21,7 +29,10 @@ int main(int argc, char const *argv[]) {
 
     Importer importer;
     auto pScene = importer.import(modelPath);
+    auto pIntegrator = std::make_shared<PathTraceIntegrator>();
 
-    crayRenderSample(pScene, spp);
+    std::filesystem::path outPath = "craystal.exr";
+
+    crayRenderSample(pIntegrator, pScene, spp, outPath);
     return 0;
 }

@@ -1,11 +1,12 @@
 #pragma once
 
 // Core
-#include "Core/Buffer.h"
 #include "Core/BVH.h"
+#include "Core/Buffer.h"
 #include "Core/Camera.h"
 #include "Core/Error.h"
 #include "Core/Hit.h"
+#include "Core/Integrator.h"
 #include "Core/Macros.h"
 #include "Core/Object.h"
 #include "Core/Spectrum.h"
@@ -21,5 +22,6 @@
 
 // Utils
 #include "Utils/Image.h"
+#include "Utils/Importer.h"
 #include "Utils/Logger.h"
 #include "Utils/Progress.h"
