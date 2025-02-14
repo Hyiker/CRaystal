@@ -17,7 +17,7 @@ struct CRAYSTAL_API SensorData {
     Float* weightArray;
     UInt2 size = UInt2(512u);  ///< Sensor film size.
     uint32_t spp = 1u;         ///< Samples per pixel.
-    Float weight = 1.f;        ///< Sample base weight located at pixel + 0.5.
+    Float baseWeight = 1.f;    ///< Sample base weight located at pixel + 0.5.
 
     CRAYSTAL_DEVICE_HOST uint32_t getIndex(UInt2 xy) const {
         return size.x * xy.y + xy.x;
@@ -46,7 +46,7 @@ class CRAYSTAL_API Sensor : public HostObject {
 
     void setSPP(uint32_t value) {
         mConstData.spp = value;
-        mConstData.weight = 1.0 / value;
+        mConstData.baseWeight = 1.0 / value;
     }
 
     uint32_t getSPP() const { return mConstData.spp; }

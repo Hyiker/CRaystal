@@ -36,11 +36,16 @@ target_sources(CRaystal PRIVATE
     Core/Vec.cpp
     Core/Vec.h
 
+    Material/BSDF.cu
+    Material/BSDF.h
+
     Math/AABB.h
     Math/AABB.cu
     Math/CRayMath.h
     Math/MathDefs.h
     Math/Ray.h
+    Math/Sampling.cu
+    Math/Sampling.h
 
     Scene/Scene.cu
     Scene/Scene.h
@@ -51,6 +56,9 @@ target_sources(CRaystal PRIVATE
     Scene/Triangle.h
 
     Utils/CudaUtils.h
+    Utils/CVariant.h
+    Utils/DebugUtils.cu
+    Utils/DebugUtils.h
     Utils/Image.cpp
     Utils/Image.h
     Utils/Importer.cpp

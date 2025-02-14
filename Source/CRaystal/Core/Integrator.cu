@@ -25,26 +25,56 @@ __global__ void pathTraceKernel(uint32_t frameIdx,
 
     auto ray = pCamera->generateRay(sensorSize, pixel);
 
-    Spectrum color;
+    Spectrum radiance(0.f);  ///< Radiance carried by the ray.
+    Spectrum beta(1.f);      ///< The accumulated attenuation factor.
 
-    RayHit rayHit;
-    rayHit.ray = ray;
-    if (pScene->intersect(rayHit)) {
-        const Intersection it = pScene->createIntersection(rayHit);
-        uint32_t materialID =
-            pScene->meshSOA.getMeshDesc(rayHit.hitInfo.primitiveIndex)
-                .materialID;
+    RayHit primaryRayHit;
+    for (uint32_t depth = 0u; depth < pIntegrator->maxDepth; depth++) {
+        primaryRayHit = RayHit();
+        primaryRayHit.ray = ray;
 
-        MaterialData materialData =
-            pScene->materialSystem.getMaterialData(materialID);
-        if (materialData.isEmissive()) {
-            color = Spectrum(materialData.emission);
+        bool terminatePath = false;
+        if (pScene->intersect(primaryRayHit)) {
+            const Intersection it = pScene->createIntersection(primaryRayHit);
+            uint32_t materialID =
+                pScene->meshSOA
+                    .getMeshDesc(primaryRayHit.hitInfo.primitiveIndex)
+                    .materialID;
+
+            MaterialData materialData =
+                pScene->materialSystem.getMaterialData(materialID);
+            if (materialData.isEmissive() && it.isFrontFacing) {
+                radiance += materialData.emission * beta;
+            }
+
+            BSDF bsdf = getBSDF(materialData, it.frame);
+
+            Float3 wi;
+            Float pdf;
+            auto f = bsdf.sampleEvaluate(sampler, it.viewW, wi, pdf);
+
+            beta *= f / pdf;
+
+            ray.origin = it.posW + Float(1e-5) * it.getOrientedFaceNormal();
+            ray.direction = wi;
+
+            terminatePath |= beta.maxValue() < 1e-6f || pdf == 0.0;
+
         } else {
-            color = Spectrum(materialData.diffuseRefl);
+            terminatePath = true;
         }
+
+        if (sampler.nextSample1D() < pIntegrator->rrThreshold) {
+            terminatePath = true;
+        }
+
+        if (terminatePath)
+            break;
+        else
+            beta /= 1.0 - pIntegrator->rrThreshold;
     }
 
-    pSensor->addSample(color, pixel);
+    pSensor->addSample(radiance, pixel);
 }
 
 PathTraceIntegratorView* PathTraceIntegrator::getDeviceView() const {

@@ -17,8 +17,8 @@ CRAYSTAL_DEVICE_HOST Float3 Frame::createTangentSafe(const Float3& normal) {
     if (1.0 - absDot(normal, tangent) < kEps) {
         tangent = Float3(1, 0, 0);
     }
-    Float3 bitangent = cross(normal, tangent);
-    return cross(bitangent, normal);
+    Float3 bitangent = normalize(cross(normal, tangent));
+    return normalize(cross(bitangent, normal));
 }
 
 CRAYSTAL_DEVICE_HOST Float3 Frame::toLocal(const Float3& world) const {

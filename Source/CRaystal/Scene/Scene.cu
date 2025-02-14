@@ -33,9 +33,9 @@ SceneView::createIntersection(const RayHit& rayHit) const {
         case HitType::Triangle: {
             TriangleData triangle = meshSOA.getTriangle(hit.primitiveIndex);
             faceNormal = triangle.getFaceNormal();
-            shadingNormal = triangle.vData[0].normal * barycentric.x +
-                            triangle.vData[1].normal * barycentric.y +
-                            triangle.vData[2].normal * barycentric.z;
+            shadingNormal = normalize(triangle.vData[0].normal * barycentric.x +
+                                      triangle.vData[1].normal * barycentric.y +
+                                      triangle.vData[2].normal * barycentric.z);
         } break;
     }
 

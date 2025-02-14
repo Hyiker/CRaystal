@@ -2,6 +2,22 @@
 
 namespace CRay {
 
+CRAYSTAL_DEVICE_HOST BSDF getBSDF(const MaterialData& material,
+                                  const Frame& frame) {
+    BSDFVariant bsdfVar;
+
+    switch (material.type) {
+        case MaterialType::Diffuse: {
+            bsdfVar.emplace<LambertianBSDF>(material.diffuseRefl);
+        } break;
+        case MaterialType::Principled: {
+            bsdfVar.emplace<PrincipledBSDF>();
+        } break;
+    }
+
+    return BSDF(bsdfVar, frame);
+}
+
 CRAYSTAL_DEVICE MaterialData
 MaterialView::getMaterialData(uint32_t materialID) const {
     return materialData[materialID];

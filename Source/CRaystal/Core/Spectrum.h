@@ -32,13 +32,13 @@ class SpectrumBase {
         }
     }
 
-    CRAYSTAL_DEVICE_HOST SpectrumBase(const SpectrumBase& other) {
+    CRAYSTAL_DEVICE_HOST SpectrumBase(const T& other) {
         for (int i = 0; i < N; i++) {
             mData[i] = other.mData[i];
         }
     }
 
-    CRAYSTAL_DEVICE_HOST explicit SpectrumBase(SpectrumBase&& other) noexcept {
+    CRAYSTAL_DEVICE_HOST explicit SpectrumBase(T&& other) noexcept {
         for (int i = 0; i < N; i++) {
             mData[i] = std::move(other.mData[i]);
         }
@@ -110,6 +110,13 @@ class SpectrumBase {
         return *static_cast<T*>(this);
     }
 
+    CRAYSTAL_DEVICE_HOST T& operator/=(Float v) {
+        for (int i = 0; i < N; ++i) {
+            mData[i] /= v;
+        }
+        return *static_cast<T*>(this);
+    }
+
     CRAYSTAL_DEVICE_HOST T operator*(Float scalar) const {
         T result(0);
         for (int i = 0; i < N; ++i) {
@@ -166,6 +173,21 @@ class SpectrumBase {
         return result;
     }
 
+    CRAYSTAL_DEVICE_HOST Float maxValue() const {
+        Float v = mData[0];
+        for (int i = 1; i < N; ++i) {
+            v = std::max(v, mData[i]);
+        }
+        return v;
+    }
+    CRAYSTAL_DEVICE_HOST Float minValue() const {
+        Float v = mData[0];
+        for (int i = 1; i < N; ++i) {
+            v = std::min(v, mData[i]);
+        }
+        return v;
+    }
+
    protected:
     Float mData[N];
 };
@@ -176,6 +198,7 @@ class CRAYSTAL_API RGBSpectrum : public SpectrumBase<3, RGBSpectrum> {
    public:
     using SpectrumBase::SpectrumBase;
     using SpectrumBase::operator=;
+    using SpectrumBase::operator/=;
 
     CRAYSTAL_DEVICE_HOST explicit RGBSpectrum(Float3 rgb) {
         mData[0] = rgb.r;
@@ -229,6 +252,8 @@ class CRAYSTAL_API BroadSpectrum
    public:
     using SpectrumBase::SpectrumBase;
     using SpectrumBase::operator=;
+    using SpectrumBase::operator/=;
+    using SpectrumBase::operator*;
 
     CRAYSTAL_DEVICE_HOST BroadSpectrum(const BroadSpectrum& spectrum)
         : SpectrumBase(spectrum) {}
