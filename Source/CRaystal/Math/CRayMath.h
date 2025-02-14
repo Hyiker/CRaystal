@@ -1,8 +1,8 @@
 #pragma once
 #include <algorithm>
+#include <glm/glm.hpp>
 
 #include "Core/Macros.h"
-#include <glm/glm.hpp>
 
 namespace CRay {
 
@@ -35,5 +35,9 @@ template <typename T>
 CRAYSTAL_DEVICE_HOST constexpr T radians(const T& val) {
     return glm::radians(val);
 }
+
+CRAYSTAL_API CRAYSTAL_DEVICE_HOST int floatAsInt(float v);
+
+CRAYSTAL_API CRAYSTAL_DEVICE_HOST float intAsFloat(int v);
 
 }  // namespace CRay

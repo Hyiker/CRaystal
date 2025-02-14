@@ -41,8 +41,10 @@ target_sources(CRaystal PRIVATE
 
     Math/AABB.h
     Math/AABB.cu
+    Math/CRayMath.cu
     Math/CRayMath.h
     Math/MathDefs.h
+    Math/Ray.cu
     Math/Ray.h
     Math/Sampling.cu
     Math/Sampling.h

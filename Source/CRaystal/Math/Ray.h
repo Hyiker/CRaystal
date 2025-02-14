@@ -14,6 +14,8 @@ struct CRAYSTAL_API Ray {
     CRAYSTAL_DEVICE_HOST Ray() = default;
     CRAYSTAL_DEVICE_HOST Ray(const Float3 o, const Float3 d)
         : origin(o), direction(d) {}
+
+    CRAYSTAL_DEVICE_HOST void offsetOrigin(const Float3& normal);
 };
 
 }  // namespace CRay

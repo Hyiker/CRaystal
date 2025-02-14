@@ -32,18 +32,25 @@ CRAYSTAL_DEVICE Spectrum evaluateNEE(const SceneView& scene,
     // Shadow test
     Ray shadowRay(intersection.posW, normalize(toLight));
     shadowRay.tMax = length(toLight) - kEps;
-    if (scene.intersectOcclusion(shadowRay)) {
+    shadowRay.offsetOrigin(intersection.faceNormal);
+
+    RayHit rayHit;
+    rayHit.ray = shadowRay;
+    if (scene.intersect(rayHit)) {
+        auto lightIt = scene.createIntersection(rayHit);
+
+        uint32_t materialID =
+            scene.meshSOA.getMeshDesc(rayHit.hitInfo.primitiveIndex).materialID;
+        MaterialData materialData =
+            scene.materialSystem.getMaterialData(materialID);
+        Spectrum emission = materialData.emission;
+
+        return lightIt.isFrontFacing
+                   ? bsdf.evaluate(intersection.viewW, lightDir) * emission *
+                         absDot(lightDir, vertexData.normal) / pdf / distSqr
+                   : Spectrum(0);
+    } else
         return Spectrum(0);
-    }
-
-    Spectrum emission =
-        scene.materialSystem
-            .getMaterialData(
-                scene.meshSOA.getMeshDesc(emissiveIndex).materialID)
-            .emission;
-
-    return bsdf.evaluate(intersection.viewW, lightDir) * emission *
-           absDot(lightDir, vertexData.normal) / pdf / distSqr;
 }
 
 __global__ void pathTraceKernel(uint32_t frameIdx,
@@ -96,8 +103,9 @@ __global__ void pathTraceKernel(uint32_t frameIdx,
 
             beta *= f / pdf;
 
-            ray.origin = it.posW + Float(1e-5) * it.getOrientedFaceNormal();
+            ray.origin = it.posW;
             ray.direction = wi;
+            ray.offsetOrigin(it.faceNormal);
 
             terminatePath |= beta.maxValue() < 1e-6f || pdf == 0.0;
 
