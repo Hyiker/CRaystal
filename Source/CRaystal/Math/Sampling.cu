@@ -1,6 +1,16 @@
 #include "MathDefs.h"
 #include "Sampling.h"
 namespace CRay {
+CRAYSTAL_API CRAYSTAL_DEVICE_HOST Float2 sampleBarycentric(const Float2& u) {
+    float u1 = u[0];
+    float u2 = u[1];
+
+    bool flip = (u1 + u2) > 1.0f;
+    u1 = flip ? (1.0f - u1) : u1;
+    u2 = flip ? (1.0f - u2) : u2;
+
+    return Float2(u1, u2);
+}
 
 CRAYSTAL_DEVICE_HOST Float3 uniformSampleSphere(const Float2& u) {
     Float z = 1.0f - 2.0f * u[0];

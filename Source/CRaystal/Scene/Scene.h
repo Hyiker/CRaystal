@@ -31,6 +31,8 @@ struct CRAYSTAL_API SceneView {
 
     CRAYSTAL_DEVICE bool intersect(RayHit& rayHit) const;
 
+    CRAYSTAL_DEVICE bool intersectOcclusion(const Ray& ray) const;
+
     CRAYSTAL_DEVICE Intersection createIntersection(const RayHit& rayHit) const;
 };
 

@@ -3,6 +3,8 @@
 #include "Core/Vec.h"
 namespace CRay {
 
+CRAYSTAL_API CRAYSTAL_DEVICE_HOST Float2 sampleBarycentric(const Float2& u);
+
 CRAYSTAL_API CRAYSTAL_DEVICE_HOST Float3 uniformSampleSphere(const Float2& u);
 
 CRAYSTAL_API CRAYSTAL_DEVICE_HOST Float uniformSampleSpherePdf();

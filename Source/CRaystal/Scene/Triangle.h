@@ -18,6 +18,10 @@ struct CRAYSTAL_API TriangleData {
     VertexData vData[3];
 
     CRAYSTAL_DEVICE_HOST Float3 getFaceNormal() const;
+
+    CRAYSTAL_DEVICE_HOST VertexData interpolate(const Float3 weights) const;
+
+    CRAYSTAL_DEVICE_HOST Float getArea() const;
 };
 
 struct CRAYSTAL_API MeshDesc {

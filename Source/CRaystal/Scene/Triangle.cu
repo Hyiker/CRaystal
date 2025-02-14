@@ -15,6 +15,28 @@ CRAYSTAL_DEVICE_HOST Float3 TriangleData::getFaceNormal() const {
     return normalize(normal);
 }
 
+CRAYSTAL_DEVICE_HOST VertexData
+TriangleData::interpolate(const Float3 weights) const {
+    VertexData data;
+    data.position = vData[0].position * weights[0] +
+                    vData[1].position * weights[1] +
+                    vData[2].position * weights[2];
+
+    data.normal = vData[0].normal * weights[0] + vData[1].normal * weights[1] +
+                  vData[2].normal * weights[2];
+
+    data.texCrd = vData[0].texCrd * weights[0] + vData[1].texCrd * weights[1] +
+                  vData[2].texCrd * weights[2];
+
+    return data;
+}
+
+CRAYSTAL_DEVICE_HOST Float TriangleData::getArea() const {
+    Float3 v0 = vData[0].position - vData[1].position;
+    Float3 v1 = vData[2].position - vData[1].position;
+    return length(cross(v0, v1)) / 2.f;
+}
+
 CRAYSTAL_DEVICE bool TriangleMeshSOA::intersect(PrimitiveID id, const Ray& ray,
                                                 HitInfo& hitInfo,
                                                 Float& hitT) const {

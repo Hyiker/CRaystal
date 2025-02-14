@@ -1,10 +1,49 @@
 #include "Core/Sampler.h"
 #include "Integrator.h"
+#include "Math/Sampling.h"
 #include "Utils/Progress.h"
-
 namespace CRay {
 PathTraceIntegrator::PathTraceIntegrator() {
     mpConstDataBuffer = std::make_unique<DeviceBuffer>(sizeof(DeviceView));
+}
+
+CRAYSTAL_DEVICE Spectrum evaluateNEE(const SceneView& scene,
+                                     const Intersection& intersection,
+                                     const BSDF& bsdf, Sampler& sampler) {
+    /** Sample light
+     */
+    const int emissiveCnt = scene.materialSystem.getEmissiveCount();
+    if (emissiveCnt == 0) return Spectrum(0);
+    PrimitiveID emissiveIndex =
+        std::min<int>(emissiveCnt * sampler.nextSample1D(), emissiveCnt - 1);
+
+    auto emissiveTriangle = scene.meshSOA.getTriangle(emissiveIndex);
+
+    Float2 barycentric = sampleBarycentric(sampler.nextSample2D());
+    auto vertexData = emissiveTriangle.interpolate(Float3(
+        1.f - barycentric.x - barycentric.y, barycentric.x, barycentric.y));
+
+    Float3 targetPos = vertexData.position;
+    Float3 toLight = targetPos - intersection.posW;
+    Float distSqr = dot(toLight, toLight);
+    Float3 lightDir = toLight / std::sqrt(distSqr);
+    Float pdf = 1.0 / emissiveTriangle.getArea();
+
+    // Shadow test
+    Ray shadowRay(intersection.posW, normalize(toLight));
+    shadowRay.tMax = length(toLight) - kEps;
+    if (scene.intersectOcclusion(shadowRay)) {
+        return Spectrum(0);
+    }
+
+    Spectrum emission =
+        scene.materialSystem
+            .getMaterialData(
+                scene.meshSOA.getMeshDesc(emissiveIndex).materialID)
+            .emission;
+
+    return bsdf.evaluate(intersection.viewW, lightDir) * emission *
+           absDot(lightDir, vertexData.normal) / pdf / distSqr;
 }
 
 __global__ void pathTraceKernel(uint32_t frameIdx,
@@ -48,6 +87,8 @@ __global__ void pathTraceKernel(uint32_t frameIdx,
             }
 
             BSDF bsdf = getBSDF(materialData, it.frame);
+
+            radiance += evaluateNEE(*pScene, it, bsdf, sampler);
 
             Float3 wi;
             Float pdf;

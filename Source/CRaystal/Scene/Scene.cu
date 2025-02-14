@@ -13,6 +13,21 @@ CRAYSTAL_DEVICE bool SceneView::intersect(RayHit& rayHit) const {
     return intersected;
 }
 
+CRAYSTAL_DEVICE bool SceneView::intersectOcclusion(const Ray& ray) const {
+    // TODO: implement a lower cost intersect occlusion.
+    bool intersected = false;
+    RayHit rayHit;
+    rayHit.ray = ray;
+
+    for (uint32_t i = 0; i < sphereSOA.count; i++) {
+        intersected |= intersectShape(PrimitiveID(i), sphereSOA, rayHit);
+    }
+
+    intersected |= acceleration.intersect(meshSOA, rayHit);
+
+    return intersected;
+}
+
 CRAYSTAL_DEVICE Intersection
 SceneView::createIntersection(const RayHit& rayHit) const {
     const Ray& ray = rayHit.ray;

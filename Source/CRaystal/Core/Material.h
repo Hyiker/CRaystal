@@ -63,6 +63,10 @@ class CRAYSTAL_API MaterialManager {
         DeviceArray<uint32_t> emissiveTriangleIndex;
 
         CRAYSTAL_DEVICE MaterialData getMaterialData(uint32_t materialID) const;
+
+        CRAYSTAL_DEVICE int getEmissiveCount() const {
+            return emissiveTriangleIndex.size();
+        }
     };
 
     MaterialManager(const std::vector<MaterialData>& materialData,
