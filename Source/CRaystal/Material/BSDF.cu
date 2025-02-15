@@ -2,45 +2,15 @@
 #include "Math/MathDefs.h"
 #include "Math/Sampling.h"
 namespace CRay {
-
-CRAYSTAL_DEVICE_HOST LambertianBSDF::LambertianBSDF(Spectrum kd)
-    : mDiffuse(kd) {}
-
-CRAYSTAL_DEVICE_HOST Spectrum
-LambertianBSDF::evaluateImpl(const Float3& wo, const Float3& wi) const {
-    return mDiffuse * kInvPi;
-}
-
-CRAYSTAL_DEVICE_HOST Float3 LambertianBSDF::sampleImpl(const Float3& wo,
-                                                       const Float2& u,
-                                                       Float& pdf) const {
-    Float3 wi = cosineWeightSampleHemisphere(u);
-    pdf = cosineWeightSampleHemispherePdf(wi);
-    return wi;
-}
-
-CRAYSTAL_DEVICE_HOST Spectrum
-PrincipledBSDF::evaluateImpl(const Float3& wo, const Float3& wi) const {
-    return Spectrum(0.f);
-}
-
-CRAYSTAL_DEVICE_HOST Float3 PrincipledBSDF::sampleImpl(const Float3& wo,
-                                                       const Float2& u,
-                                                       Float& pdf) const {
-    Float3 wi = cosineWeightSampleHemisphere(u);
-    pdf = cosineWeightSampleHemispherePdf(wi);
-    return wi;
-}
-
 CRAYSTAL_DEVICE_HOST BSDF::BSDF(BSDFVariant component, Frame frame)
     : mComponent(component), mFrame(frame) {}
 
 template <typename Ret, typename Func>
 CRAYSTAL_DEVICE_HOST Ret dispatchBSDF(BSDFVariant variant, Func&& func,
                                       Ret defaultValue = Ret()) {
-    if (const auto* lambertian = get_if<LambertianBSDF>(&variant)) {
+    if (const auto* lambertian = get_if<LambertianBRDF>(&variant)) {
         return func(*lambertian);
-    } else if (const auto* principled = get_if<PrincipledBSDF>(&variant)) {
+    } else if (const auto* principled = get_if<PrincipledBRDF>(&variant)) {
         return func(*principled);
     }
     return defaultValue;

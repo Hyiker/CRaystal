@@ -48,11 +48,13 @@ class BSDFBase {
     }
 };
 
-class CRAYSTAL_API LambertianBSDF : public BSDFBase<LambertianBSDF> {
+/** Lambertian diffuse BSDF.
+ */
+class CRAYSTAL_API LambertianBRDF : public BSDFBase<LambertianBRDF> {
    public:
-    CRAYSTAL_DEVICE_HOST LambertianBSDF() = default;
+    CRAYSTAL_DEVICE_HOST LambertianBRDF() = default;
 
-    CRAYSTAL_DEVICE_HOST LambertianBSDF(Spectrum kd);
+    CRAYSTAL_DEVICE_HOST LambertianBRDF(Spectrum kd);
 
     CRAYSTAL_DEVICE_HOST Spectrum evaluateImpl(const Float3& wo,
                                                const Float3& wi) const;
@@ -64,9 +66,23 @@ class CRAYSTAL_API LambertianBSDF : public BSDFBase<LambertianBSDF> {
     Spectrum mDiffuse;
 };
 
-class CRAYSTAL_API PrincipledBSDF : public BSDFBase<PrincipledBSDF> {
+/** Simplified version of Disney principled BRDF(2012), no transmission
+ * included. In fact this is the same as Cook-Torrance BRDF.
+ */
+class CRAYSTAL_API PrincipledBRDF : public BSDFBase<PrincipledBRDF> {
    public:
-    CRAYSTAL_DEVICE_HOST PrincipledBSDF() = default;
+    CRAYSTAL_DEVICE_HOST PrincipledBRDF() = default;
+
+    /** Construct from PBR params.
+     */
+    CRAYSTAL_DEVICE_HOST PrincipledBRDF(const Spectrum& baseColor,
+                                        Float roughness, Float metallic,
+                                        Float anisotropic);
+
+    /** Construct from wavefront obj mtl params.
+     */
+    CRAYSTAL_DEVICE_HOST PrincipledBRDF(const Spectrum& kd, const Spectrum& ks,
+                                        Float specularFactor);
 
     CRAYSTAL_DEVICE_HOST Spectrum evaluateImpl(const Float3& wo,
                                                const Float3& wi) const;
@@ -75,9 +91,25 @@ class CRAYSTAL_API PrincipledBSDF : public BSDFBase<PrincipledBSDF> {
                                            Float& pdf) const;
 
    private:
+    /** Evaluate the diffuse component, thetaD is the angle between view and
+     *  half-vector.
+     */
+    CRAYSTAL_DEVICE_HOST Spectrum evaluateDiffuse(Float cosThetaV,
+                                                  Float cosThetaL,
+                                                  Float cosThetaD) const;
+
+    CRAYSTAL_DEVICE_HOST Spectrum evaluateSpecular(Float cosThetaV,
+                                                   Float cosThetaL,
+                                                   Float cosThetaH,
+                                                   Float cosThetaD) const;
+
+    Spectrum mBaseColor;  ///< Base color.
+    Float mRoughness;     ///< Roughness, controls diffuse and specular.
+    Float mMetallic;      ///< 0: dielectric, 1: metal.
+    Float mAnisotropic;   ///< 0: Isotropic, 1: Full anisotropic
 };
 
-using BSDFVariant = CVariant<LambertianBSDF, PrincipledBSDF>;
+using BSDFVariant = CVariant<LambertianBRDF, PrincipledBRDF>;
 
 class CRAYSTAL_API BSDF {
    public:

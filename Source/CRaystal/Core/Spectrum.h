@@ -180,12 +180,21 @@ class SpectrumBase {
         }
         return v;
     }
+
     CRAYSTAL_DEVICE_HOST Float minValue() const {
         Float v = mData[0];
         for (int i = 1; i < N; ++i) {
             v = std::min(v, mData[i]);
         }
         return v;
+    }
+
+    CRAYSTAL_DEVICE_HOST Float averageValue() const {
+        Float v = 0.0;
+        for (int i = 0; i < N; ++i) {
+            v += std::min(v, mData[i]);
+        }
+        return v / Float(N);
     }
 
    protected:

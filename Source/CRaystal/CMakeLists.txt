@@ -38,6 +38,10 @@ target_sources(CRaystal PRIVATE
 
     Material/BSDF.cu
     Material/BSDF.h
+    Material/Fresnel.cu
+    Material/Fresnel.h
+    Material/LambertianBRDF.cu
+    Material/PrincipledBRDF.cu
 
     Math/AABB.h
     Math/AABB.cu

@@ -127,7 +127,7 @@ static SceneData createSceneData(const std::filesystem::path& path,
         }
 
         // Determine material type based on properties
-        matData.type = MaterialType::Diffuse;
+        matData.type = MaterialType::Principled;
 
         std::string mtlName = material->GetName().C_Str();
         if (auto it = emissiveDict.find(mtlName); it != emissiveDict.end()) {
