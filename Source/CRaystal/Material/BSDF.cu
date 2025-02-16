@@ -41,6 +41,17 @@ CRAYSTAL_DEVICE_HOST Float3 BSDF::sample(Sampler& sampler, const Float3& wo,
         Float3(0.f));
 }
 
+CRAYSTAL_DEVICE_HOST Float BSDF::evaluatePdf(const Float3& wo,
+                                             const Float3& wi) const {
+    const Float3 woLocal = mFrame.toLocal(wo);
+    const Float3 wiLocal = mFrame.toLocal(wi);
+
+    return dispatchBSDF<Float>(
+        mComponent,
+        [&](const auto& bsdf) { return bsdf.evaluatePdf(woLocal, wiLocal); },
+        Float(0.f));
+}
+
 CRAYSTAL_DEVICE_HOST Spectrum BSDF::sampleEvaluate(Sampler& sampler,
                                                    const Float3& wo, Float3& wi,
                                                    Float& pdf) const {

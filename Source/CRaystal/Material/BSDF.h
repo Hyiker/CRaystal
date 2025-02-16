@@ -31,6 +31,13 @@ class BSDFBase {
         return derived()->evaluateImpl(wo, wi) * wi.z;
     }
 
+    /** Evaluate the pdf of given wi, wo.
+     */
+    CRAYSTAL_DEVICE_HOST Float evaluatePdf(const Float3& wo,
+                                           const Float3& wi) const {
+        return derived()->evaluatePdfImpl(wo, wi);
+    }
+
     /** Sample the outgoing direction in local space.
      */
     CRAYSTAL_DEVICE_HOST Float3 sample(const Float3& wo, const Float2& u,
@@ -59,6 +66,9 @@ class CRAYSTAL_API LambertianBRDF : public BSDFBase<LambertianBRDF> {
     CRAYSTAL_DEVICE_HOST Spectrum evaluateImpl(const Float3& wo,
                                                const Float3& wi) const;
 
+    CRAYSTAL_DEVICE_HOST Float evaluatePdfImpl(const Float3& wo,
+                                               const Float3& wi) const;
+
     CRAYSTAL_DEVICE_HOST Float3 sampleImpl(const Float3& wo, const Float2& u,
                                            Float& pdf) const;
 
@@ -85,6 +95,9 @@ class CRAYSTAL_API PrincipledBRDF : public BSDFBase<PrincipledBRDF> {
                                         Float specularFactor);
 
     CRAYSTAL_DEVICE_HOST Spectrum evaluateImpl(const Float3& wo,
+                                               const Float3& wi) const;
+
+    CRAYSTAL_DEVICE_HOST Float evaluatePdfImpl(const Float3& wo,
                                                const Float3& wi) const;
 
     CRAYSTAL_DEVICE_HOST Float3 sampleImpl(const Float3& wo, const Float2& u,
@@ -120,6 +133,9 @@ class CRAYSTAL_API BSDF {
 
     CRAYSTAL_DEVICE_HOST Float3 sample(Sampler& sampler, const Float3& wo,
                                        Float& pdf) const;
+
+    CRAYSTAL_DEVICE_HOST Float evaluatePdf(const Float3& wo,
+                                           const Float3& wi) const;
 
     CRAYSTAL_DEVICE_HOST Spectrum sampleEvaluate(Sampler& sampler,
                                                  const Float3& wo, Float3& wi,

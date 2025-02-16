@@ -20,4 +20,9 @@ cosineWeightSampleHemisphere(const Float2& u);
 CRAYSTAL_API CRAYSTAL_DEVICE_HOST Float
 cosineWeightSampleHemispherePdf(const Float3& d);
 
+/** Evaluate weight for power heuristic with \beta = 2.
+ */
+CRAYSTAL_API CRAYSTAL_DEVICE_HOST Float powerHeuristic(int nf, Float fPdf,
+                                                       int ng, Float gPdf);
+
 }  // namespace CRay

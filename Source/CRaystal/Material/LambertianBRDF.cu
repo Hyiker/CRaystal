@@ -11,6 +11,11 @@ LambertianBRDF::evaluateImpl(const Float3& wo, const Float3& wi) const {
     return mDiffuse * kInvPi;
 }
 
+CRAYSTAL_DEVICE_HOST Float
+LambertianBRDF::evaluatePdfImpl(const Float3& wo, const Float3& wi) const {
+    return cosineWeightSampleHemispherePdf(wi);
+}
+
 CRAYSTAL_DEVICE_HOST Float3 LambertianBRDF::sampleImpl(const Float3& wo,
                                                        const Float2& u,
                                                        Float& pdf) const {

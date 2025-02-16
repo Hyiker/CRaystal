@@ -1,5 +1,6 @@
 #include "BSDF.h"
 #include "Fresnel.h"
+#include "Math/CRayMath.h"
 #include "Math/MathDefs.h"
 #include "Math/Sampling.h"
 
@@ -25,6 +26,8 @@ CRAYSTAL_DEVICE_HOST PrincipledBRDF::PrincipledBRDF(const Spectrum& kd,
 
 CRAYSTAL_DEVICE_HOST Spectrum
 PrincipledBRDF::evaluateImpl(const Float3& wo, const Float3& wi) const {
+    if (wo.z <= 0.0 || wi.z <= 0.0) return Spectrum(0);
+
     Float3 halfVec = (wo + wi) / Float(2.0);
     Float cosThetaV = wo.z;
     Float cosThetaI = wi.z;
@@ -32,10 +35,16 @@ PrincipledBRDF::evaluateImpl(const Float3& wo, const Float3& wi) const {
 
     Float cosThetaD = dot(wo, halfVec);
 
-    Spectrum diffuse = evaluateDiffuse(cosThetaV, cosThetaI, cosThetaD);
+    Spectrum diffuse =
+        evaluateDiffuse(cosThetaV, cosThetaI, cosThetaD) * (1.0f - mMetallic);
     Spectrum specular =
         evaluateSpecular(cosThetaV, cosThetaI, cosThetaH, cosThetaD);
     return diffuse + specular;
+}
+
+CRAYSTAL_DEVICE_HOST Float
+PrincipledBRDF::evaluatePdfImpl(const Float3& wo, const Float3& wi) const {
+    return cosineWeightSampleHemispherePdf(wi);
 }
 
 CRAYSTAL_DEVICE_HOST Float3 PrincipledBRDF::sampleImpl(const Float3& wo,
@@ -83,7 +92,8 @@ static CRAYSTAL_DEVICE_HOST Float evalGeometryDistr(Float roughness,
 CRAYSTAL_DEVICE_HOST Spectrum PrincipledBRDF::evaluateSpecular(
     Float cosThetaV, Float cosThetaI, Float cosThetaH, Float cosThetaD) const {
     Float D = evalNormalDistr(mRoughness, cosThetaH);
-    Spectrum F = fresnelSchlickApprox(Spectrum(0.04), cosThetaD);
+    Spectrum f0 = lerp(Spectrum(0.04), mBaseColor, mMetallic);
+    Spectrum F = fresnelSchlickApprox(f0, cosThetaD);
     Float G = evalGeometryDistr(mRoughness, cosThetaI, cosThetaV);
     return D * F * G / (4.0 * cosThetaI * cosThetaV);
 }
