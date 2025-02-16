@@ -1,10 +1,15 @@
 #pragma once
 #include <algorithm>
+#include <cmath>
 #include <glm/glm.hpp>
+#include <type_traits>
 
 #include "Core/Macros.h"
 
 namespace CRay {
+
+template <class T>
+concept FpType = std::is_floating_point_v<T>;
 
 template <typename T>
 CRAYSTAL_DEVICE_HOST Float dot(const T& v0, const T& v1) {
@@ -34,6 +39,16 @@ CRAYSTAL_DEVICE_HOST constexpr T degrees(const T& val) {
 template <typename T>
 CRAYSTAL_DEVICE_HOST constexpr T radians(const T& val) {
     return glm::radians(val);
+}
+
+template <FpType T>
+CRAYSTAL_DEVICE_HOST constexpr bool isNaN(T val) {
+    return ::isnan(val);
+}
+
+template <FpType T>
+CRAYSTAL_DEVICE_HOST constexpr bool isInfinite(T val) {
+    return ::isinf(val);
 }
 
 CRAYSTAL_API CRAYSTAL_DEVICE_HOST int floatAsInt(float v);

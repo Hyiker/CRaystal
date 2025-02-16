@@ -3,6 +3,7 @@
 
 #include "Enum.h"
 #include "Macros.h"
+#include "Math/CRayMath.h"
 #include "Vec.h"
 
 namespace CRay {
@@ -196,6 +197,36 @@ class SpectrumBase {
         }
         return v / Float(N);
     }
+
+    CRAYSTAL_DEVICE_HOST bool hasNaN() const {
+        bool nan = false;
+        [[unroll]]
+        for (int i = 0; i < N; ++i) {
+            nan |= isNaN(mData[i]);
+        }
+        return nan;
+    }
+
+    CRAYSTAL_DEVICE_HOST bool hasInfinity() const {
+        bool inf = false;
+        [[unroll]]
+        for (int i = 0; i < N; ++i) {
+            inf |= isInfinite(mData[i]);
+        }
+        return inf;
+    }
+
+    /** Get the illumination of spectrum(Y component of XYZ).
+        Meaningless if not a illuminant spectrum.
+     */
+    CRAYSTAL_DEVICE_HOST Float illumination() const {
+        return derived()->toXYZ()[1];
+    }
+
+   private:
+    T* derived() { return static_cast<T*>(this); }
+
+    const T* derived() const { return static_cast<const T*>(this); }
 
    protected:
     Float mData[N];

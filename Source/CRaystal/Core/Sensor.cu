@@ -18,6 +18,10 @@ CRAYSTAL_DEVICE Float evalTriangleFilter(Float filterRadius, Float2 xy) {
 
 CRAYSTAL_DEVICE void SensorData::addSample(const Spectrum& sample, Float2 xy) {
     // TODO: optimize me
+
+    // Skip sample
+    if (sample.hasNaN() || sample.hasInfinity()) return;
+
     Int2 pMin = Int2(floor(xy - Float2(1.0f)));
     Int2 pMax = Int2(ceil(xy + Float2(1.0f)));
 
