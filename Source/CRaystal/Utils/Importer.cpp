@@ -87,8 +87,7 @@ static SceneData createSceneData(const std::filesystem::path& path,
     const aiScene* scene = importer.ReadFile(
         path.string(), aiProcess_Triangulate | aiProcess_GenNormals |
                            aiProcess_CalcTangentSpace |
-                           aiProcess_JoinIdenticalVertices |
-                           aiProcess_RemoveRedundantMaterials);
+                           aiProcess_JoinIdenticalVertices);
 
     if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE ||
         !scene->mRootNode) {
@@ -137,9 +136,10 @@ static SceneData createSceneData(const std::filesystem::path& path,
         matData.finalize();
 
         logDebug(
-            "Loaded material: {}, transparency: {}, shininess: {}, IoR: {}",
+            "Loaded material: {}, transparency: {}, shininess: {}, IoR: {}, "
+            "radiance: {}",
             material->GetName().C_Str(), transparency, matData.shininess,
-            matData.IoR);
+            matData.IoR, matData.emission[0]);
     }
 
     uint32_t primitiveID = 0u;
