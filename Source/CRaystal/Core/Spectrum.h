@@ -193,7 +193,7 @@ class SpectrumBase {
     CRAYSTAL_DEVICE_HOST Float averageValue() const {
         Float v = 0.0;
         for (int i = 0; i < N; ++i) {
-            v += std::min(v, mData[i]);
+            v += mData[i];
         }
         return v / Float(N);
     }

@@ -5,6 +5,7 @@
 #include <type_traits>
 
 #include "Core/Macros.h"
+#include "Core/Vec.h"
 
 namespace CRay {
 
@@ -41,6 +42,9 @@ CRAYSTAL_DEVICE_HOST constexpr T radians(const T& val) {
     return glm::radians(val);
 }
 
+CRAYSTAL_DEVICE_HOST Float3 reflect(const Float3& incident,
+                                    const Float3& normal);
+
 template <FpType T>
 CRAYSTAL_DEVICE_HOST constexpr bool isNaN(T val) {
     return ::isnan(val);
@@ -50,6 +54,24 @@ template <FpType T>
 CRAYSTAL_DEVICE_HOST constexpr bool isInfinite(T val) {
     return ::isinf(val);
 }
+
+template <FpType T>
+CRAYSTAL_DEVICE_HOST void sinCos(T x, T* sPtr, T* cPtr) {
+    *sPtr = std::sin(x);
+    *cPtr = std::cos(x);
+}
+
+#if CRAYSTAL_GCC
+template <>
+CRAYSTAL_DEVICE_HOST void sinCos(float x, float* sPtr, float* cPtr) {
+    ::sincosf(x, sPtr, cPtr);
+}
+
+template <>
+CRAYSTAL_DEVICE_HOST void sinCos(double x, double* sPtr, double* cPtr) {
+    ::sincospi(x, sPtr, cPtr);
+}
+#endif
 
 CRAYSTAL_API CRAYSTAL_DEVICE_HOST int floatAsInt(float v);
 

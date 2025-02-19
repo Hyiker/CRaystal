@@ -7,7 +7,7 @@ CRAYSTAL_DEVICE_HOST BSDF getBSDF(const MaterialData& material,
     BSDFVariant bsdfVar;
 
     switch (material.type) {
-        case MaterialType::Diffuse: {
+        case MaterialType::FullDiffuse: {
             bsdfVar.emplace<LambertianBRDF>(material.diffuseRefl);
         } break;
         case MaterialType::Principled: {

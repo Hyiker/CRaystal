@@ -10,12 +10,12 @@
 namespace CRay {
 
 enum class MaterialType {
-    Diffuse,    ///< The diffusive material.
+    FullDiffuse,    ///< The diffusive material.
     Principled  ///< Disney principled material.
 };
 
 CRAYSTAL_ENUM_INFO(MaterialType, {
-                                     {MaterialType::Diffuse, "Diffuse"},
+                                     {MaterialType::FullDiffuse, "Diffuse"},
                                      {MaterialType::Principled, "Principled"},
                                  })
 

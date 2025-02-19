@@ -1,6 +1,10 @@
 #include "CRayMath.h"
 
 namespace CRay {
+CRAYSTAL_DEVICE_HOST Float3 reflect(const Float3& incident,
+                                    const Float3& normal) {
+    return glm::reflect(incident, normal);
+}
 
 union FloatIntUnion {
     float f;

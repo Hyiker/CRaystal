@@ -47,7 +47,7 @@ CRAYSTAL_DEVICE_HOST Float3 cosineWeightSampleHemisphere(const Float2& u) {
 }
 
 CRAYSTAL_DEVICE_HOST Float cosineWeightSampleHemispherePdf(const Float3& d) {
-    return std::max(0.0f, d[2]) * kInvPi;
+    return std::max(0.0f, d.z) * kInvPi;
 }
 
 CRAYSTAL_DEVICE_HOST Float powerHeuristic(int nf, Float fPdf, int ng,

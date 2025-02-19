@@ -4,7 +4,8 @@
 #include "Utils/Progress.h"
 namespace CRay {
 
-PathTraceIntegrator::PathTraceIntegrator() {
+PathTraceIntegrator::PathTraceIntegrator(Configs configs)
+    : mConfigs(std::move(configs)) {
     mpConstDataBuffer = std::make_unique<DeviceBuffer>(sizeof(DeviceView));
 }
 
@@ -22,7 +23,8 @@ static CRAYSTAL_DEVICE LightSample sampleLight(const SceneView& scene,
     const int emissiveCnt = scene.materialSystem.getEmissiveCount();
     if (emissiveCnt == 0) return {};
     PrimitiveID emissiveIndex =
-        std::min<int>(emissiveCnt * sampler.nextSample1D(), emissiveCnt - 1);
+        scene.materialSystem.emissiveTriangleIndex[std::min<int>(
+            emissiveCnt * sampler.nextSample1D(), emissiveCnt - 1)];
 
     // Create sample point on triangle.
     auto emissiveTriangle = scene.meshSOA.getTriangle(emissiveIndex);
@@ -33,35 +35,33 @@ static CRAYSTAL_DEVICE LightSample sampleLight(const SceneView& scene,
     Float3 targetPos = vertexData.position;
     Float3 toLight = targetPos - intersection.posW;
     Float distSqr = dot(toLight, toLight);
-    Float3 lightDir = toLight / std::sqrt(distSqr);
-    Float pdf = 1.0 / (emissiveTriangle.getArea() * emissiveCnt);
+    Float dist = std::sqrt(distSqr);
+    Float3 lightDir = toLight / dist;
 
-    // Shadow test
-    Ray shadowRay(intersection.posW, normalize(toLight));
-    shadowRay.tMax = length(toLight) - kEps;
-    shadowRay.offsetOrigin(intersection.faceNormal);
-
-    RayHit rayHit;
-    rayHit.ray = shadowRay;
-    if (scene.intersect(rayHit)) {
-        auto lightIt = scene.createIntersection(rayHit);
-        if (!lightIt.isFrontFacing) return {};
-
-        uint32_t materialID =
-            scene.meshSOA.getMeshDesc(rayHit.hitInfo.primitiveIndex).materialID;
-        MaterialData materialData =
-            scene.materialSystem.getMaterialData(materialID);
-        Spectrum emission = materialData.emission;
-
-        LightSample sample;
-        sample.weight = bsdf.evaluate(intersection.viewW, lightDir) * emission *
-                        absDot(lightDir, vertexData.normal) / distSqr;
-        sample.dirW = lightDir;
-        sample.pdf = pdf;
-        return sample;
-    } else {
+    if (dot(vertexData.normal, lightDir) > 0.0 || dist < kEps) {
         return {};
     }
+
+    // Shadow test
+    Ray shadowRay(intersection.posW, lightDir);
+    shadowRay.offsetOrigin(intersection.getOrientedFaceNormal());
+    shadowRay.tMax = length(shadowRay.origin - targetPos) - kEps;
+
+    if (scene.intersectOcclusion(shadowRay)) {
+        return {};
+    }
+
+    uint32_t materialID = scene.meshSOA.getMeshDesc(emissiveIndex).materialID;
+    MaterialData materialData =
+        scene.materialSystem.getMaterialData(materialID);
+
+    LightSample sample;
+    sample.weight =
+        bsdf.evaluate(intersection.viewW, lightDir) * materialData.emission;
+    sample.dirW = lightDir;
+    sample.pdf = distSqr / (emissiveTriangle.getArea() * emissiveCnt *
+                            absDot(lightDir, vertexData.normal));
+    return sample;
 }
 
 static CRAYSTAL_DEVICE Spectrum evalMIS(const SceneView& scene,
@@ -70,13 +70,14 @@ static CRAYSTAL_DEVICE Spectrum evalMIS(const SceneView& scene,
     Spectrum value(0.0);
     {
         // Light sample MIS
-        Float lightPdf = 0.0f;
         LightSample ls = sampleLight(scene, intersection, bsdf, sampler);
-        if (lightPdf != 0.0) {
+        Float lightPdf = ls.pdf;
+        if (lightPdf > 0.0) {
             Float bsdfPdf = bsdf.evaluatePdf(intersection.viewW, ls.dirW);
 
-            value +=
-                powerHeuristic(1, lightPdf, 1, bsdfPdf) * ls.weight / lightPdf;
+            if (bsdfPdf > 0.0)
+                value += powerHeuristic(1, lightPdf, 1, bsdfPdf) * ls.weight /
+                         lightPdf;
         }
     }
 
@@ -86,9 +87,9 @@ static CRAYSTAL_DEVICE Spectrum evalMIS(const SceneView& scene,
         Float bsdfPdf = 0.0;
         Spectrum bsdfWeight = bsdf.sampleEvaluate(sampler, intersection.viewW,
                                                   sampledDir, bsdfPdf);
-        if (bsdfWeight.maxValue() > 0.0 && bsdfPdf != 0.0) {
+        if (bsdfWeight.maxValue() > 0.0 && bsdfPdf > 0.0) {
             Ray ray(intersection.posW, sampledDir);
-            ray.offsetOrigin(intersection.faceNormal);
+            ray.offsetOrigin(intersection.getOrientedFaceNormal());
 
             RayHit rayHit;
             rayHit.ray = ray;
@@ -105,17 +106,19 @@ static CRAYSTAL_DEVICE Spectrum evalMIS(const SceneView& scene,
 
                     // Convert from solid angle pdf to area pdf
                     Float3 toLight = lightIt.posW - intersection.posW;
-                    Float distSqr = length(toLight);
+                    Float distSqr = dot(toLight, toLight);
                     Float3 lightVec = toLight / std::sqrt(distSqr);
                     Float cosThetaLight = absDot(lightVec, lightIt.faceNormal);
+                    if (cosThetaLight != 0.0) {
+                        Float area =
+                            scene.meshSOA
+                                .getTriangle(rayHit.hitInfo.primitiveIndex)
+                                .getArea();
+                        Float lightPdf = distSqr / (area * cosThetaLight);
 
-                    Float area =
-                        scene.meshSOA.getTriangle(rayHit.hitInfo.primitiveIndex)
-                            .getArea();
-                    Float lightPdf = distSqr / (area * cosThetaLight);
-
-                    value += powerHeuristic(1, bsdfPdf, 1, lightPdf) *
-                             emission * bsdfWeight / bsdfPdf;
+                        value += powerHeuristic(1, bsdfPdf, 1, lightPdf) *
+                                 emission * bsdfWeight / bsdfPdf;
+                    }
                 }
             }
         }
@@ -123,6 +126,7 @@ static CRAYSTAL_DEVICE Spectrum evalMIS(const SceneView& scene,
     return value;
 }
 
+template <bool useMIS = true>
 __global__ void pathTraceKernel(uint32_t frameIdx,
                                 const PathTraceIntegratorView* pIntegrator,
                                 const SceneView* pScene,
@@ -159,26 +163,32 @@ __global__ void pathTraceKernel(uint32_t frameIdx,
 
             MaterialData materialData =
                 pScene->materialSystem.getMaterialData(materialID);
-            if (materialData.isEmissive() && it.isFrontFacing) {
+            if (materialData.isEmissive() && it.isFrontFacing && depth == 0u) {
                 radiance += materialData.emission * beta;
+                break;
             }
 
             BSDF bsdf = getBSDF(materialData, it.frame);
 
-            radiance += evalMIS(*pScene, it, bsdf, sampler);
+            if constexpr (useMIS) {
+                radiance += evalMIS(*pScene, it, bsdf, sampler) * beta;
+            } else {
+                LightSample ls = sampleLight(*pScene, it, bsdf, sampler);
+                if (ls.pdf > 0.0) radiance += ls.weight * beta / ls.pdf;
+            }
 
             Float3 wi;
             Float pdf;
             auto f = bsdf.sampleEvaluate(sampler, it.viewW, wi, pdf);
+            if (pdf <= 0.0f) break;
 
             beta *= f / pdf;
 
             ray.origin = it.posW;
             ray.direction = wi;
-            ray.offsetOrigin(it.faceNormal);
+            ray.offsetOrigin(it.getOrientedFaceNormal());
 
-            terminatePath |= beta.maxValue() < 1e-6f || pdf == 0.0;
-
+            terminatePath |= beta.maxValue() < 1e-6f;
         } else {
             terminatePath = true;
         }
@@ -187,10 +197,9 @@ __global__ void pathTraceKernel(uint32_t frameIdx,
             terminatePath = true;
         }
 
-        if (terminatePath)
-            break;
-        else
-            beta /= 1.0 - pIntegrator->rrThreshold;
+        if (terminatePath) break;
+
+        beta /= 1.0 - pIntegrator->rrThreshold;
     }
 
     pSensor->addSample(radiance, pixel);
@@ -214,9 +223,16 @@ void PathTraceIntegrator::dispatch(Scene& scene, int spp) const {
     UInt2 size = pSensor->getSize();
 
     for (int i : Progress(pSensor->getSPP(), "Render progress ")) {
-        pathTraceKernel<<<dim3(size.x, size.y, 1), dim3(16, 16, 1)>>>(
-            i, getDeviceView(), scene.getDeviceView(), pCamera->getDeviceView(),
-            pSensor->getDeviceView());
+        if (mConfigs.useMIS) {
+            pathTraceKernel<true><<<dim3(size.x, size.y, 1), dim3(16, 16, 1)>>>(
+                i, getDeviceView(), scene.getDeviceView(),
+                pCamera->getDeviceView(), pSensor->getDeviceView());
+        } else {
+            pathTraceKernel<false>
+                <<<dim3(size.x, size.y, 1), dim3(16, 16, 1)>>>(
+                    i, getDeviceView(), scene.getDeviceView(),
+                    pCamera->getDeviceView(), pSensor->getDeviceView());
+        }
 
         cudaDeviceSynchronize();
     }

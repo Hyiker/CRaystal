@@ -28,7 +28,7 @@ class BSDFBase {
     CRAYSTAL_DEVICE_HOST Spectrum evaluate(const Float3& wo,
                                            const Float3& wi) const {
         // Apply \cos(\theta) here
-        return derived()->evaluateImpl(wo, wi) * wi.z;
+        return derived()->evaluateImpl(wo, wi) * std::abs(wi.z);
     }
 
     /** Evaluate the pdf of given wi, wo.
