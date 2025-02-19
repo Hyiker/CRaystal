@@ -119,7 +119,10 @@ class CRAYSTAL_API PrincipledBRDF : public BSDFBase<PrincipledBRDF> {
     Spectrum mBaseColor;  ///< Base color.
     Float mRoughness;     ///< Roughness, controls diffuse and specular.
     Float mMetallic;      ///< 0: dielectric, 1: metal.
-    Float mAnisotropic;   ///< 0: Isotropic, 1: Full anisotropic
+    Float mAnisotropic;   ///< 0: Isotropic, 1: Full anisotropic.
+
+    Float mDiffuseProb = 1.0;
+    Float mSpecularProb = 1.0;
 };
 
 using BSDFVariant = CVariant<LambertianBRDF, PrincipledBRDF>;

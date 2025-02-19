@@ -13,6 +13,8 @@ struct LightSample {
     Spectrum weight = Spectrum(0);  ///< Light sample radiance.
     Float3 dirW = Float3(0);        ///< Light direction in world space.
     Float pdf = 0;                  ///< Light sample pdf.
+    PrimitiveID emissiveID;         ///< Light primitive ID.
+    Float lightSelectPdf = 0.0;
 };
 
 static CRAYSTAL_DEVICE LightSample sampleLight(const SceneView& scene,
@@ -61,6 +63,8 @@ static CRAYSTAL_DEVICE LightSample sampleLight(const SceneView& scene,
     sample.dirW = lightDir;
     sample.pdf = distSqr / (emissiveTriangle.getArea() * emissiveCnt *
                             absDot(lightDir, vertexData.normal));
+    sample.emissiveID = emissiveIndex;
+    sample.lightSelectPdf = 1.0 / emissiveCnt;
     return sample;
 }
 
@@ -68,9 +72,9 @@ static CRAYSTAL_DEVICE Spectrum evalMIS(const SceneView& scene,
                                         const Intersection& intersection,
                                         const BSDF& bsdf, Sampler& sampler) {
     Spectrum value(0.0);
+    // Light sample MIS
+    LightSample ls = sampleLight(scene, intersection, bsdf, sampler);
     {
-        // Light sample MIS
-        LightSample ls = sampleLight(scene, intersection, bsdf, sampler);
         Float lightPdf = ls.pdf;
         if (lightPdf > 0.0) {
             Float bsdfPdf = bsdf.evaluatePdf(intersection.viewW, ls.dirW);
@@ -163,7 +167,7 @@ __global__ void pathTraceKernel(uint32_t frameIdx,
 
             MaterialData materialData =
                 pScene->materialSystem.getMaterialData(materialID);
-            if (materialData.isEmissive() && it.isFrontFacing && depth == 0u) {
+            if (materialData.isEmissive() && it.isFrontFacing) {
                 radiance += materialData.emission * beta;
                 break;
             }

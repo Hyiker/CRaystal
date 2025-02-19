@@ -40,8 +40,9 @@ CRAYSTAL_DEVICE_HOST PrincipledBRDF::PrincipledBRDF(const Spectrum& baseColor,
       mRoughness(std::clamp(roughness, 0.0f, 1.0f)),
       mMetallic(std::clamp(metallic, 0.0f, 1.0f)),
       mAnisotropic(std::clamp(anisotropic, 0.0f, 1.0f)) {
-    mRoughness = std::clamp(mRoughness, 0.001f, 1.0f);
-    mMetallic = std::clamp(mMetallic, 0.0f, 1.0f);
+    Float specularProb = lerp(0.1f, 1.0f, mMetallic);
+    mDiffuseProb = 1.0 - specularProb;
+    mSpecularProb = specularProb;
 }
 
 CRAYSTAL_DEVICE_HOST PrincipledBRDF::PrincipledBRDF(const Spectrum& kd,
@@ -54,12 +55,12 @@ CRAYSTAL_DEVICE_HOST Spectrum
 PrincipledBRDF::evaluateImpl(const Float3& wo, const Float3& wi) const {
     if (wo.z <= 0.0 || wi.z <= 0.0) return Spectrum(0);
 
-    Float3 halfVec = (wo + wi) / Float(2.0);
+    Float3 wh = normalize(wo + wi);
     Float cosThetaV = wo.z;
     Float cosThetaI = wi.z;
-    Float cosThetaH = halfVec.z;
+    Float cosThetaH = wh.z;
 
-    Float cosThetaD = dot(wo, halfVec);
+    Float cosThetaD = dot(wo, wh);
 
     Spectrum diffuse =
         evaluateDiffuse(cosThetaV, cosThetaI, cosThetaD) * (1.0f - mMetallic);
@@ -88,8 +89,7 @@ PrincipledBRDF::evaluatePdfImpl(const Float3& wo, const Float3& wi) const {
         specularPdf = D * cosThetaH / (4.0f * cosThetaD);
     }
 
-    Float specularProb = lerp(0.1f, 1.0f, mMetallic);
-    Float pdf = lerp(diffusePdf, specularPdf, specularProb);
+    Float pdf = diffusePdf * mDiffuseProb + specularPdf * mSpecularProb;
 
     return pdf;
 }
@@ -102,29 +102,25 @@ CRAYSTAL_DEVICE_HOST Float3 PrincipledBRDF::sampleImpl(const Float3& wo,
         return Float3(0.0f);
     }
 
-    Float specularProb = lerp(0.1f, 1.0f, mMetallic);
     Float u1 = u[0];
     Float u2 = u[1];
 
     Float3 wi;
-    if (u1 < specularProb) {
-        u1 = u1 / specularProb;
-        Float alpha = (0.5 + mRoughness * 0.5);
+    if (u1 < mSpecularProb) {
+        u1 /= mSpecularProb;
 
-        Float3 uDir = Float3(1, 0, 0);
-        Float3 vDir = Float3(0, 1, 0);
+        Float alpha = mRoughness * mRoughness;
+        Float alphaSqr = alpha * alpha;
+        Float phi = u2 * k2Pi;
+        Float tanThetaSqr = alphaSqr * u1 / (1 - u1);
+        Float cosTheta = 1 / sqrt(1 + tanThetaSqr);
+        Float r = std::sqrt(std::max<Float>(1 - cosTheta * cosTheta, 0));
 
-        Float cosU, sinU;
-        sinCos(k2Pi * u1, &sinU, &cosU);
-
-        Float3 wh = std::sqrt(u2 / (Float(1.0) - u2)) * alpha *
-                        (cosU * uDir + sinU * vDir) +
-                    Float3(0, 0, 1);
-        wh = normalize(wh);
+        Float3 wh = Float3(cos(phi) * r, sin(phi) * r, cosTheta);
 
         wi = reflect(-wo, wh);
     } else {
-        u1 = (u1 - specularProb) / (1.0f - specularProb);
+        u1 = (u1 - mSpecularProb) / (1.0f - mSpecularProb);
         wi = cosineWeightSampleHemisphere(Float2(u1, u2));
     }
 
