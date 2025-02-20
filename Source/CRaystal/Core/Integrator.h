@@ -19,7 +19,7 @@ class CRAYSTAL_API PathTraceIntegrator {
 
     struct DeviceView {
         uint32_t maxDepth = 10u;    ///< Path tracer max path length.
-        Float rrThreshold = 0.15f;  ///< Russian roulette threshold value.
+        Float rrThreshold = 0.05f;  ///< Russian roulette threshold value.
     };
 
     PathTraceIntegrator(Configs configs);

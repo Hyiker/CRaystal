@@ -41,7 +41,8 @@ static CRAYSTAL_DEVICE LightSample sampleLight(const SceneView& scene,
     Float dist = std::sqrt(distSqr);
     Float3 lightDir = toLight / dist;
 
-    if (dot(vertexData.normal, lightDir) > 0.0 || dist < kEps) {
+    if (dot(intersection.getOrientedFaceNormal(), lightDir) < 0.0 ||
+        dot(vertexData.normal, lightDir) > 0.0 || dist < kEps) {
         return {};
     }
 
@@ -98,7 +99,8 @@ static CRAYSTAL_DEVICE Spectrum evalMIS(const SceneView& scene,
 
             RayHit rayHit;
             rayHit.ray = ray;
-            if (scene.intersect(rayHit)) {
+            if (scene.intersect(rayHit) &&
+                rayHit.hitInfo.primitiveIndex == ls.emissiveID) {
                 auto lightIt = scene.createIntersection(rayHit);
 
                 uint32_t materialID =
@@ -122,7 +124,8 @@ static CRAYSTAL_DEVICE Spectrum evalMIS(const SceneView& scene,
                         Float lightPdf = distSqr / (area * cosThetaLight);
 
                         value += powerHeuristic(1, bsdfPdf, 1, lightPdf) *
-                                 emission * bsdfWeight / bsdfPdf;
+                                 emission * bsdfWeight / bsdfPdf /
+                                 ls.lightSelectPdf;
                     }
                 }
             }
@@ -183,7 +186,7 @@ __global__ void pathTraceKernel(uint32_t frameIdx,
             }
 
             Float3 wi;
-            Float pdf;
+            Float pdf = 0.0;
             auto f = bsdf.sampleEvaluate(sampler, it.viewW, wi, pdf);
             if (pdf <= 0.0f) break;
 
@@ -193,7 +196,6 @@ __global__ void pathTraceKernel(uint32_t frameIdx,
             ray.direction = wi;
             ray.offsetOrigin(it.getOrientedFaceNormal());
 
-            terminatePath |= beta.maxValue() < 1e-6f;
         } else {
             terminatePath = true;
         }
@@ -204,7 +206,13 @@ __global__ void pathTraceKernel(uint32_t frameIdx,
 
         if (terminatePath) break;
 
-        beta /= 1.0 - pIntegrator->rrThreshold;
+        Float q = saturate(
+            std::max<Float>(pIntegrator->rrThreshold, 1.0f - beta.maxValue()));
+        if (sampler.nextSample1D() < q) {
+            break;
+        }
+
+        beta /= (1.0f - q);
     }
 
     pSensor->addSample(radiance, pixel);

@@ -41,8 +41,11 @@ CRAYSTAL_DEVICE_HOST PrincipledBRDF::PrincipledBRDF(const Spectrum& baseColor,
       mMetallic(std::clamp(metallic, 0.0f, 1.0f)),
       mAnisotropic(std::clamp(anisotropic, 0.0f, 1.0f)) {
     Float specularProb = lerp(0.1f, 1.0f, mMetallic);
-    mDiffuseProb = 1.0 - specularProb;
+    mDiffuseProb = 1.0;
     mSpecularProb = specularProb;
+
+    mDiffuseProb /= (mDiffuseProb + mSpecularProb);
+    mSpecularProb /= (mDiffuseProb + mSpecularProb);
 }
 
 CRAYSTAL_DEVICE_HOST PrincipledBRDF::PrincipledBRDF(const Spectrum& kd,

@@ -139,8 +139,11 @@ SceneData Importer::createSceneData(const std::filesystem::path& path,
         }
 
         // Determine material type based on properties
-        matData.type = MaterialType::Principled;
-
+        if (matData.specularRefl.maxValue() == 0.0) {
+            matData.type = MaterialType::FullDiffuse;
+        } else {
+            matData.type = MaterialType::Principled;
+        }
         std::string mtlName = material->GetName().C_Str();
         if (auto it = emissiveDict.find(mtlName); it != emissiveDict.end()) {
             matData.emission = it->second;
