@@ -216,15 +216,13 @@ void Image::writePNG(const std::filesystem::path& filename,
     }
 }
 
-void Image::readPNG(const std::filesystem::path& filename) {
-    CRAYSTAL_CHECK(filename.extension() == ".png", "Output file must be .png");
-
+void Image::readMisc(const std::filesystem::path& filename) {
     int width, height, channels;
     unsigned char* imageData =
         stbi_load(filename.string().c_str(), &width, &height, &channels, 0);
 
     if (!imageData) {
-        logFatal("PNG load error: {}", stbi_failure_reason());
+        logFatal("STB load error: {}", stbi_failure_reason());
         return;
     }
 
@@ -258,12 +256,10 @@ void Image::readPNG(const std::filesystem::path& filename) {
 
 Image Image::load(const std::filesystem::path& filename) {
     Image image(0, 0, 3);
-    if (filename.extension() == ".png") {
-        image.readPNG(filename);
-    } else if (filename.extension() == ".exr") {
+    if (filename.extension() == ".exr") {
         image.readEXR(filename);
     } else {
-        logFatal("Unsupported image format: {}", filename.extension().string());
+        image.readMisc(filename);
     }
     return image;
 }

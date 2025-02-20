@@ -38,6 +38,7 @@ SceneView::createIntersection(const RayHit& rayHit) const {
 
     const HitInfo& hit = rayHit.hitInfo;
     Float3 barycentric = hit.getBarycentricWeights();
+    Float2 texCrd = hit.barycentric;
 
     switch (hit.type) {
         case HitType::Sphere: {
@@ -48,13 +49,13 @@ SceneView::createIntersection(const RayHit& rayHit) const {
         case HitType::Triangle: {
             TriangleData triangle = meshSOA.getTriangle(hit.primitiveIndex);
             faceNormal = triangle.getFaceNormal();
-            shadingNormal = normalize(triangle.vData[0].normal * barycentric.x +
-                                      triangle.vData[1].normal * barycentric.y +
-                                      triangle.vData[2].normal * barycentric.z);
+            VertexData vd = triangle.interpolate(barycentric);
+            shadingNormal = normalize(vd.normal);
+            texCrd = vd.texCrd;
         } break;
     }
 
-    return Intersection(posW, faceNormal, shadingNormal, viewW);
+    return Intersection(posW, faceNormal, shadingNormal, viewW, texCrd);
 }
 
 Scene::Scene(SceneData&& data) {
@@ -63,8 +64,8 @@ Scene::Scene(SceneData&& data) {
 
     mpSphereManager = std::make_shared<SphereManager>(data.spheres);
     mpMeshManager = std::make_shared<TriangleMeshManager>(data.meshes);
-    mpMaterialManager =
-        std::make_shared<MaterialManager>(data.materials, data.emissiveIndex);
+    mpMaterialManager = std::make_shared<MaterialManager>(
+        data.materials, data.textureImages, data.emissiveIndex);
 
     mpDeviceSceneView = std::make_unique<DeviceBuffer>(sizeof(SceneView));
 

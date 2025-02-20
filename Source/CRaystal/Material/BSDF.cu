@@ -2,6 +2,31 @@
 #include "Math/MathDefs.h"
 #include "Math/Sampling.h"
 namespace CRay {
+
+CRAYSTAL_DEVICE BSDF getBSDF(const MaterialView& materialSystem,
+                             const MaterialData& material,
+                             const Intersection& intersection) {
+    BSDFVariant bsdfVar;
+
+    Spectrum diffuse = material.diffuseRefl;
+    if (material.hasDiffuseTexture()) {
+        diffuse = Spectrum(materialSystem.getTexture(material.diffuseHandle)
+                                .sample(intersection.texCrd));
+    }
+
+    switch (material.type) {
+        case MaterialType::FullDiffuse: {
+            bsdfVar.emplace<LambertianBRDF>(diffuse);
+        } break;
+        case MaterialType::Principled: {
+            bsdfVar.emplace<PrincipledBRDF>(diffuse, material.specularRefl,
+                                            material.shininess);
+        } break;
+    }
+
+    return BSDF(bsdfVar, intersection.frame);
+}
+
 CRAYSTAL_DEVICE_HOST BSDF::BSDF(BSDFVariant component, Frame frame)
     : mComponent(component), mFrame(frame) {}
 

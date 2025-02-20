@@ -13,10 +13,12 @@ struct CRAYSTAL_API Intersection {
     Frame frame;         ///< Shading frame.
     Float3 faceNormal;   ///< Geometry face normal.
     Float3 viewW;        ///< view direction.
+    Float2 texCrd;       ///< Texture coordinates.
     bool isFrontFacing;  ///< True is dot(viewW, faceNormal) > 0.
 
     CRAYSTAL_DEVICE_HOST Intersection(Float3 posW, Float3 faceNormal,
-                                      Float3 shadingNormal, Float3 viewW);
+                                      Float3 shadingNormal, Float3 viewW,
+                                      Float2 texCrd);
 
     CRAYSTAL_DEVICE_HOST Float3 getOrientedFaceNormal() const {
         return isFrontFacing ? faceNormal : -faceNormal;

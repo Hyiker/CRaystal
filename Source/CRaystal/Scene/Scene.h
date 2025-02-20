@@ -13,6 +13,7 @@
 #include "Shape.h"
 #include "Sphere.h"
 #include "Triangle.h"
+#include "Utils/Image.h"
 
 namespace CRay {
 
@@ -41,6 +42,7 @@ struct SceneData {
     std::vector<MeshData> meshes;
 
     std::vector<MaterialData> materials;
+    std::vector<Image> textureImages;
     std::vector<uint32_t> emissiveIndex;
 };
 

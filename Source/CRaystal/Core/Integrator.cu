@@ -1,9 +1,10 @@
 #include "Core/Sampler.h"
 #include "Integrator.h"
+#include "Material/BSDF.h"
 #include "Math/Sampling.h"
 #include "Utils/Progress.h"
-namespace CRay {
 
+namespace CRay {
 PathTraceIntegrator::PathTraceIntegrator(Configs configs)
     : mConfigs(std::move(configs)) {
     mpConstDataBuffer = std::make_unique<DeviceBuffer>(sizeof(DeviceView));
@@ -172,7 +173,7 @@ __global__ void pathTraceKernel(uint32_t frameIdx,
                 break;
             }
 
-            BSDF bsdf = getBSDF(materialData, it.frame);
+            BSDF bsdf = getBSDF(pScene->materialSystem, materialData, it);
 
             if constexpr (useMIS) {
                 radiance += evalMIS(*pScene, it, bsdf, sampler) * beta;

@@ -33,6 +33,8 @@ target_sources(CRaystal PRIVATE
     Core/Spectrum.cpp
     Core/Spectrum.h
     Core/SpectrumTabData.h
+    Core/Texture.cu
+    Core/Texture.h
     Core/Vec.cpp
     Core/Vec.h
 

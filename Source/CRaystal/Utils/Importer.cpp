@@ -7,7 +7,6 @@
 #include <numeric>
 #include <pugixml.hpp>
 #include <sstream>
-#include <unordered_map>
 
 #include "Core/Error.h"
 #include "Logger.h"
@@ -66,7 +65,7 @@ static Spectrum toIllumSpectrum(const std::string& str) {
     return Spectrum::fromRGB(numbers, true);
 }
 
-using EmissiveDict = std::unordered_map<std::string, Spectrum>;
+using EmissiveDict = Importer::EmissiveDict;
 
 static EmissiveDict createEmissiveDict(const pugi::xml_node& rootNode) {
     std::unordered_map<std::string, Spectrum> result;
@@ -78,8 +77,13 @@ static EmissiveDict createEmissiveDict(const pugi::xml_node& rootNode) {
     return result;
 }
 
-static SceneData createSceneData(const std::filesystem::path& path,
-                                 const EmissiveDict& emissiveDict) {
+std::filesystem::path Importer::resolveResourcePath(
+    const std::filesystem::path& relPath) const {
+    return mBasePath / relPath;
+}
+
+SceneData Importer::createSceneData(const std::filesystem::path& path,
+                                    const EmissiveDict& emissiveDict) {
     SceneData data;
 
     Assimp::Importer importer;
@@ -104,6 +108,15 @@ static SceneData createSceneData(const std::filesystem::path& path,
         if (material->Get(AI_MATKEY_COLOR_DIFFUSE, color) == AI_SUCCESS) {
             matData.diffuseRefl =
                 Spectrum::fromRGB(Float3(color.r, color.g, color.b));
+        }
+
+        aiString diffusePath;
+        if (material->GetTexture(aiTextureType_DIFFUSE, 0, &diffusePath) ==
+            AI_SUCCESS) {
+            matData.flags |= uint32_t(MaterialFlags::hasDiffuseTexture);
+            matData.diffuseHandle = data.textureImages.size();
+            data.textureImages.push_back(
+                Image::load(resolveResourcePath(diffusePath.C_Str())));
         }
 
         if (material->Get(AI_MATKEY_COLOR_SPECULAR, color) == AI_SUCCESS) {
@@ -189,6 +202,8 @@ static SceneData createSceneData(const std::filesystem::path& path,
 }
 
 Scene::Ref Importer::import(const std::filesystem::path& path) {
+    mBasePath = path.parent_path();
+
     logInfo("Importing from {}", path.string());
 
     CRAYSTAL_CHECK(path.extension() == ".xml",

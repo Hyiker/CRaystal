@@ -12,6 +12,8 @@ namespace CRay {
  */
 class CRAYSTAL_API DeviceBuffer {
    public:
+    using Ref = std::shared_ptr<DeviceBuffer>;
+
     DeviceBuffer(int sizeInBytes);
     ~DeviceBuffer();
 

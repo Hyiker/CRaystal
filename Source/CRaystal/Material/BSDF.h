@@ -2,7 +2,9 @@
 #include <variant>
 
 #include "Core/Frame.h"
+#include "Core/Intersection.h"
 #include "Core/Macros.h"
+#include "Core/Material.h"
 #include "Core/Sampler.h"
 #include "Core/Spectrum.h"
 #include "Core/Vec.h"
@@ -148,5 +150,9 @@ class CRAYSTAL_API BSDF {
     BSDFVariant mComponent;
     Frame mFrame;
 };
+
+CRAYSTAL_API CRAYSTAL_DEVICE BSDF getBSDF(const MaterialView& materialSystem,
+                                          const MaterialData& material,
+                                          const Intersection& it);
 
 }  // namespace CRay

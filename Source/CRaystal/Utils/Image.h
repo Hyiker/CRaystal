@@ -73,7 +73,7 @@ class CRAYSTAL_API Image {
 
     void writePNG(const std::filesystem::path& filename,
                   bool gammaCorrect) const;
-    void readPNG(const std::filesystem::path& filename);
+    void readMisc(const std::filesystem::path& filename);
 
     /** Construct an image object from a file.
      */
