@@ -216,8 +216,9 @@ void Image::writePNG(const std::filesystem::path& filename,
     }
 }
 
-void Image::readMisc(const std::filesystem::path& filename) {
+void Image::readMisc(const std::filesystem::path& filename, bool toLinear) {
     int width, height, channels;
+    stbi_set_flip_vertically_on_load(true);
     unsigned char* imageData =
         stbi_load(filename.string().c_str(), &width, &height, &channels, 0);
 
@@ -248,18 +249,22 @@ void Image::readMisc(const std::filesystem::path& filename) {
         auto& layer = mData[c];
         for (int i = 0; i < area; i++) {
             layer[i] = float(imageData[i * mChannels + c]) / 255.f;
+            if (toLinear) {
+                layer[i] = std::pow<float>(layer[i], 2.2);
+            }
         }
     }
 
+    mColorSpace = ColorSpace::Linear;
     stbi_image_free(imageData);  // Free the loaded image data
 }
 
-Image Image::load(const std::filesystem::path& filename) {
+Image Image::load(const std::filesystem::path& filename, bool toLinear) {
     Image image(0, 0, 3);
     if (filename.extension() == ".exr") {
         image.readEXR(filename);
     } else {
-        image.readMisc(filename);
+        image.readMisc(filename, toLinear);
     }
     return image;
 }

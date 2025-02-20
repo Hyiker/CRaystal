@@ -63,7 +63,7 @@ static CRAYSTAL_DEVICE LightSample sampleLight(const SceneView& scene,
     sample.weight =
         bsdf.evaluate(intersection.viewW, lightDir) * materialData.emission;
     sample.dirW = lightDir;
-    sample.pdf = distSqr / (emissiveTriangle.getArea() * emissiveCnt *
+    sample.pdf = distSqr / (emissiveTriangle.getArea() *
                             absDot(lightDir, vertexData.normal));
     sample.emissiveID = emissiveIndex;
     sample.lightSelectPdf = 1.0 / emissiveCnt;
@@ -83,7 +83,7 @@ static CRAYSTAL_DEVICE Spectrum evalMIS(const SceneView& scene,
 
             if (bsdfPdf > 0.0)
                 value += powerHeuristic(1, lightPdf, 1, bsdfPdf) * ls.weight /
-                         lightPdf;
+                         lightPdf / ls.lightSelectPdf;
         }
     }
 
