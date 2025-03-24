@@ -35,7 +35,8 @@ static CRAYSTAL_DEVICE LightSample sampleLight(const SceneView& scene,
     auto vertexData = emissiveTriangle.interpolate(Float3(
         1.f - barycentric.x - barycentric.y, barycentric.x, barycentric.y));
 
-    Float3 targetPos = vertexData.position;
+    Float3 targetPos =
+        offsetRayOrigin(vertexData.position, emissiveTriangle.getFaceNormal());
     Float3 toLight = targetPos - intersection.posW;
     Float distSqr = dot(toLight, toLight);
     Float dist = std::sqrt(distSqr);
@@ -76,6 +77,10 @@ static CRAYSTAL_DEVICE Spectrum evalMIS(const SceneView& scene,
     Spectrum value(0.0);
     // Light sample MIS
     LightSample ls = sampleLight(scene, intersection, bsdf, sampler);
+    if (ls.pdf <= 0.0) {
+        return value;
+    }
+
     {
         Float lightPdf = ls.pdf;
         if (lightPdf > 0.0) {
@@ -83,7 +88,7 @@ static CRAYSTAL_DEVICE Spectrum evalMIS(const SceneView& scene,
 
             if (bsdfPdf > 0.0)
                 value += powerHeuristic(1, lightPdf, 1, bsdfPdf) * ls.weight /
-                         lightPdf / ls.lightSelectPdf;
+                         lightPdf;
         }
     }
 
@@ -108,7 +113,7 @@ static CRAYSTAL_DEVICE Spectrum evalMIS(const SceneView& scene,
                         .materialID;
                 MaterialData materialData =
                     scene.materialSystem.getMaterialData(materialID);
-                if (materialData.isEmissive() && lightIt.isFrontFacing) {
+                if (materialData.isEmissive()) {
                     Spectrum emission = materialData.emission;
 
                     // Convert from solid angle pdf to area pdf
@@ -124,14 +129,14 @@ static CRAYSTAL_DEVICE Spectrum evalMIS(const SceneView& scene,
                         Float lightPdf = distSqr / (area * cosThetaLight);
 
                         value += powerHeuristic(1, bsdfPdf, 1, lightPdf) *
-                                 emission * bsdfWeight / bsdfPdf /
-                                 ls.lightSelectPdf;
+                                 emission * bsdfWeight / bsdfPdf;
                     }
                 }
             }
         }
     }
-    return value;
+
+    return value / ls.lightSelectPdf;
 }
 
 template <bool useMIS = true>
@@ -171,7 +176,7 @@ __global__ void pathTraceKernel(uint32_t frameIdx,
 
             MaterialData materialData =
                 pScene->materialSystem.getMaterialData(materialID);
-            if (materialData.isEmissive() && it.isFrontFacing) {
+            if (materialData.isEmissive()) {
                 radiance += materialData.emission * beta;
                 break;
             }
@@ -182,7 +187,8 @@ __global__ void pathTraceKernel(uint32_t frameIdx,
                 radiance += evalMIS(*pScene, it, bsdf, sampler) * beta;
             } else {
                 LightSample ls = sampleLight(*pScene, it, bsdf, sampler);
-                if (ls.pdf > 0.0) radiance += ls.weight * beta / ls.pdf;
+                if (ls.pdf > 0.0)
+                    radiance += ls.weight * beta / ls.pdf / ls.lightSelectPdf;
             }
 
             Float3 wi;

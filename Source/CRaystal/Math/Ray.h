@@ -18,4 +18,6 @@ struct CRAYSTAL_API Ray {
     CRAYSTAL_DEVICE_HOST void offsetOrigin(const Float3& normal);
 };
 
+CRAYSTAL_API CRAYSTAL_DEVICE_HOST Float3 offsetRayOrigin(const Float3p32 p, const Float3p32 n);
+
 }  // namespace CRay
