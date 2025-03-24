@@ -43,6 +43,7 @@ target_sources(CRaystal PRIVATE
     Material/Fresnel.cu
     Material/Fresnel.h
     Material/LambertianBRDF.cu
+    Material/PhongBRDF.cu
     Material/PrincipledBRDF.cu
 
     Math/AABB.h

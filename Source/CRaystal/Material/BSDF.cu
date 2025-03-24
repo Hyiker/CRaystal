@@ -11,7 +11,7 @@ CRAYSTAL_DEVICE BSDF getBSDF(const MaterialView& materialSystem,
     Spectrum diffuse = material.diffuseRefl;
     if (material.hasDiffuseTexture()) {
         diffuse = Spectrum(materialSystem.getTexture(material.diffuseHandle)
-                                .sample(intersection.texCrd));
+                               .sample(intersection.texCrd));
     }
 
     switch (material.type) {
@@ -22,6 +22,10 @@ CRAYSTAL_DEVICE BSDF getBSDF(const MaterialView& materialSystem,
             bsdfVar.emplace<PrincipledBRDF>(diffuse, material.specularRefl,
                                             material.shininess);
         } break;
+        case MaterialType::Phong: {
+            bsdfVar.emplace<PhongBRDF>(diffuse, material.specularRefl,
+                                       material.shininess);
+        } break;
     }
 
     return BSDF(bsdfVar, intersection.frame);
@@ -30,15 +34,18 @@ CRAYSTAL_DEVICE BSDF getBSDF(const MaterialView& materialSystem,
 CRAYSTAL_DEVICE_HOST BSDF::BSDF(BSDFVariant component, Frame frame)
     : mComponent(component), mFrame(frame) {}
 
-template <typename Ret, typename Func>
-CRAYSTAL_DEVICE_HOST Ret dispatchBSDF(BSDFVariant variant, Func&& func,
+template <typename Ret, typename Func, int I = 0>
+CRAYSTAL_DEVICE_HOST Ret dispatchBSDF(const BSDFVariant& variant, Func&& func,
                                       Ret defaultValue = Ret()) {
-    if (const auto* lambertian = get_if<LambertianBRDF>(&variant)) {
-        return func(*lambertian);
-    } else if (const auto* principled = get_if<PrincipledBRDF>(&variant)) {
-        return func(*principled);
+    if constexpr (I >= BSDFVariant::type_count)
+        return defaultValue;
+    else {
+        if (auto pBSDF = variant.template get_if<BSDFVariant::type_at_t<I>>())
+            return func(*pBSDF);
+        else
+            return dispatchBSDF<Ret, Func, I + 1>(
+                variant, std::forward<Func>(func), defaultValue);
     }
-    return defaultValue;
 }
 
 CRAYSTAL_DEVICE_HOST Spectrum BSDF::evaluate(const Float3& wo,

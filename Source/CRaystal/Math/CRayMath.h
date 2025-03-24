@@ -61,6 +61,10 @@ CRAYSTAL_DEVICE_HOST void sinCos(T x, T* sPtr, T* cPtr) {
     *cPtr = std::cos(x);
 }
 
+CRAYSTAL_DEVICE_HOST Float acosSafe(Float v);
+
+CRAYSTAL_DEVICE_HOST Float asinSafe(Float v);
+
 #if CRAYSTAL_GCC
 template <>
 CRAYSTAL_DEVICE_HOST void sinCos(float x, float* sPtr, float* cPtr) {

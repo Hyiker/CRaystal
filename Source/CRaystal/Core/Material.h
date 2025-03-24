@@ -11,12 +11,14 @@ namespace CRay {
 
 enum class MaterialType {
     FullDiffuse,  ///< The diffusive material.
-    Principled    ///< Disney principled material.
+    Principled,   ///< Disney principled material.
+    Phong         ///< Phong material.
 };
 
 CRAYSTAL_ENUM_INFO(MaterialType, {
                                      {MaterialType::FullDiffuse, "Diffuse"},
                                      {MaterialType::Principled, "Principled"},
+                                     {MaterialType::Phong, "Phong"},
                                  })
 
 CRAYSTAL_ENUM_REGISTER(MaterialType)

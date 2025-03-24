@@ -1,9 +1,19 @@
-#include "CRayMath.h"
+#include <cmath>
 
+#include "CRayMath.h"
+#include "MathDefs.h"
 namespace CRay {
 CRAYSTAL_DEVICE_HOST Float3 reflect(const Float3& incident,
                                     const Float3& normal) {
     return glm::reflect(incident, normal);
+}
+
+CRAYSTAL_DEVICE_HOST Float acosSafe(Float v) {
+    return std::acos(glm::clamp<Float>(v, kEps, 1.0 - kEps));
+}
+
+CRAYSTAL_DEVICE_HOST Float asinSafe(Float v) {
+    return std::asin(glm::clamp<Float>(v, kEps, 1.0 - kEps));
 }
 
 union FloatIntUnion {

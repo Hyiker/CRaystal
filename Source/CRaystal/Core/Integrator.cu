@@ -212,13 +212,15 @@ __global__ void pathTraceKernel(uint32_t frameIdx,
 
         if (terminatePath) break;
 
-        Float q = saturate(
-            std::max<Float>(pIntegrator->rrThreshold, 1.0f - beta.maxValue()));
-        if (sampler.nextSample1D() < q) {
-            break;
-        }
+        if (depth > 5) {
+            Float q = saturate(std::max<Float>(pIntegrator->rrThreshold,
+                                               1.0f - beta.maxValue()));
+            if (sampler.nextSample1D() < q) {
+                break;
+            }
 
-        beta /= (1.0f - q);
+            beta /= (1.0f - q);
+        }
     }
 
     pSensor->addSample(radiance, pixel);

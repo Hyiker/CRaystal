@@ -78,6 +78,33 @@ class CRAYSTAL_API LambertianBRDF : public BSDFBase<LambertianBRDF> {
     Spectrum mDiffuse;
 };
 
+/** Phong BRDF
+ * $f_r = k_d/\pi + k_s (n + 2) / (2 \pi)(\text{max}(0, \cos\alpha))^n$
+ */
+class CRAYSTAL_API PhongBRDF : public BSDFBase<PhongBRDF> {
+   public:
+    CRAYSTAL_DEVICE_HOST PhongBRDF() = default;
+
+    CRAYSTAL_DEVICE_HOST PhongBRDF(Spectrum kd, Spectrum ks, Float specularExp);
+
+    CRAYSTAL_DEVICE_HOST Spectrum evaluateImpl(const Float3& wo,
+                                               const Float3& wi) const;
+
+    CRAYSTAL_DEVICE_HOST Float evaluatePdfImpl(const Float3& wo,
+                                               const Float3& wi) const;
+
+    CRAYSTAL_DEVICE_HOST Float3 sampleImpl(const Float3& wo, const Float2& u,
+                                           Float& pdf) const;
+
+   private:
+    Spectrum mKd;
+    Spectrum mKs;
+    Float mSpecularExp;
+
+    Float mDiffuseProb;
+    Float mSpecularProb;
+};
+
 /** Simplified version of Disney principled BRDF(2012), no transmission
  * included. In fact this is the same as Cook-Torrance BRDF.
  */
@@ -127,7 +154,7 @@ class CRAYSTAL_API PrincipledBRDF : public BSDFBase<PrincipledBRDF> {
     Float mSpecularProb = 1.0;
 };
 
-using BSDFVariant = CVariant<LambertianBRDF, PrincipledBRDF>;
+using BSDFVariant = CVariant<LambertianBRDF, PrincipledBRDF, PhongBRDF>;
 
 class CRAYSTAL_API BSDF {
    public:

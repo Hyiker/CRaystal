@@ -7,6 +7,16 @@ namespace CRay {
 template <typename... Types>
 class CVariant {
    public:
+    template <int Index>
+    struct type_at {
+        using type = std::tuple_element_t<Index, std::tuple<Types...>>;
+    };
+
+    template <int Index>
+    using type_at_t = typename type_at<Index>::type;
+
+    static constexpr std::size_t type_count = sizeof...(Types);
+
     CRAYSTAL_DEVICE_HOST CVariant() : typeIndex(-1) {}
 
     CRAYSTAL_DEVICE_HOST CVariant(const CVariant& other)
@@ -108,7 +118,6 @@ class CVariant {
         }
     }
 
-   private:
     static constexpr size_t MaxAlign = std::max({alignof(Types)...});
     static constexpr size_t MaxSize = std::max({sizeof(Types)...});
 
